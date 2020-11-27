@@ -1207,11 +1207,26 @@ for i in range(1,np.shape(T)[0]+1):
 Yearly_Costs = pd.DataFrame(Yearly_Costs)
 
 
-
-
-
-
-
+#Actual current flows through feeders
+Actual_C_Flow_l = []
+for l in L: #Type of line
+    for s in Omega_N: #Buses from 
+        for r in Omega_l_s[l][s-1]: #Buses to
+            for k in K_l[l]: #Line option 
+                for t in T: #Time stage 
+                    for b in B: #Load level
+                        if pyo.value(model.f_l_srktb[l,s,r,k,t,b]) > 0:
+                            actual_aux = {
+                                'T_Line': l,
+                                'From': s,
+                                'To': r,
+                                'Option': k,
+                                'Stage': t,
+                                'L_level': b,
+                                'Flow': pyo.value(model.f_l_srktb[l,s,r,k,t,b])
+                                }
+                            Actual_C_Flow_l.append(actual_aux) 
+                                
 
 
 
