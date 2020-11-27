@@ -771,14 +771,14 @@ model.eq4 = pyo.Constraint(T, rule=eq4_rule)
 
 def eq5_rule(model,t):
     return model.C_R_t[t] == (sum(Delta__b[b-1]*C_SS_b[b-1]*pf*(sum(sum(sum(sum(
-                                M_tr_kV[tr][k-1][V-1]*model.delta_tr_sktbv[tr,s,k,t,b,V]
-                                for V in range(1,n__V+1))
+                                M_tr_kV[tr][k-1][y-1]*model.delta_tr_sktbv[tr,s,k,t,b,y]
+                                for y in range(1,n__V+1))
                             for s in Omega_SS)
                         for k in K_tr[tr])
                     for tr in TR)
 
-                    + sum(sum(sum(sum(M_l_kV[l][k-1][V-1]*l__sr[s-1,r-1]*(model.delta_l_srktbv[l,s,r,k,t,b,V] - model.delta_l_srktbv[l,r,s,k,t,b,V])
-                                for V in range(1,n__V+1))
+                    + sum(sum(sum(sum(M_l_kV[l][k-1][z-1]*l__sr[s-1,r-1]*(model.delta_l_srktbv[l,s,r,k,t,b,z] - model.delta_l_srktbv[l,r,s,k,t,b,z])
+                                for z in range(1,n__V+1))
                             for s, r in Upsilon_l[l])
                         for k in K_l[l])
                     for l in L)
@@ -822,7 +822,7 @@ for l in L:
                 for t in T:
                     for b in B:
                         for v in range(1,n__V+1):
-                            model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= A_l_kV[l][k-1][V-1])
+                            model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= A_l_kV[l][k-1][v-1])
 
 def eq6_rule(model,t):
     return model.C_U_t[t] == (sum(sum(Delta__b[b-1]*C_U*pf*model.d_U_stb[s,t,b]
@@ -1239,7 +1239,7 @@ Current_inj_TR = []
 for tr in TR:
     for s in Omega_N:
         for k in K_tr[tr]:
-            for t in range(1,1+1):
+            for t in T:
                 for b in B:
                     aux = {
                         "TR_Type": tr,
