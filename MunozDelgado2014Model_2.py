@@ -245,8 +245,7 @@ Omega_l_s = {"EFF": [[] for i in range(0,n_bus)], #Sets of nodes connected to no
              }
 
 for branch_type in L:
-    b = Upsilon_l[branch_type]
-    for (s,r) in b:
+    for (s,r) in Upsilon_l[branch_type]:
         Omega_l_s[branch_type][(s,r)[0]-1].append((s,r)[1])
         Omega_l_s[branch_type][(s,r)[1]-1].append((s,r)[0])
 
