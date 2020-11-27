@@ -787,7 +787,6 @@ def eq5_rule(model,t):
         )
 model.eq5 = pyo.Constraint(T, rule=eq5_rule)
 
-
 model.eq5_aux1 = pyo.ConstraintList()
 for tr in TR:
     for s in Omega_SS:
@@ -796,7 +795,6 @@ for tr in TR:
                 for b in B:
                     model.eq5_aux1.add(model.g_tr_sktb[tr,s,k,t,b] == sum(model.delta_tr_sktbv[tr,s,k,t,b,V]
             for V in range(1,n__V+1)))
-
 
 model.eq5_aux2 = pyo.ConstraintList()
 for tr in TR:
@@ -816,7 +814,6 @@ for l in L:
                     for b in B:
                         model.eq5_aux3.add(model.f_l_srktb[l,s,r,k,t,b] == sum(model.delta_l_srktbv[l,s,r,k,t,b,v] for v in range(1,n__V+1)))
 
-
 model.eq5_aux4 = pyo.ConstraintList()
 for l in L:
     for r in Omega_N:
@@ -826,7 +823,6 @@ for l in L:
                     for b in B:
                         for v in range(1,n__V+1):
                             model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= A_l_kV[l][k-1][V-1])
-
 
 def eq6_rule(model,t):
     return model.C_U_t[t] == (sum(sum(Delta__b[b-1]*C_U*pf*model.d_U_stb[s,t,b]
@@ -852,7 +848,6 @@ for l in L:
                     for b in B:
                         model.eq8.add(model.f_l_srktb[l,s,r,k,t,b] <= model.y_l_srkt[l,s,r,k,t]*Fup_l_k[l][k-1])
                         
-        
 model.eq9 = pyo.ConstraintList()
 for tr in TR:
     for s in Omega_N:
@@ -881,7 +876,6 @@ for s in Omega_N:
             for b in B:
                 model.eq12.add(model.g_p_sktb["W",s,k,t,b] <= model.y_p_skt["W",s,k,t]*min(Gup_p_k["W"][k-1],Gmax_W_sktb[s-1,k-1,t-1,b-1]))
 
-
 model.eq13 = pyo.ConstraintList()
 for t in T:
     for b in B:
@@ -892,8 +886,7 @@ for t in T:
         <= Vare*sum(Mi__b[0,b-1]*D__st[s-1,t-1]
             for s in Omega_LN_t[t])       
         )
-
-        
+   
 model.eq14 = pyo.ConstraintList()
 for t in T:
     for b in B:
@@ -908,7 +901,7 @@ for t in T:
                                 for k in K_p[p])
                             for p in P)
                             - Mi__b[0,b-1]*D__st[s-1,t-1]
-                            - model.d_U_stb[s,t,b]
+                            + model.d_U_stb[s,t,b]
                         )
                 )
                                         
@@ -943,7 +936,6 @@ for t in T:
                 for tr in TR) <=1
             )
 
-
 model.eq16_1 = pyo.ConstraintList()
 for t in T:
     for b in B:
@@ -963,7 +955,6 @@ for t in T:
                     for k in K_l[l]:
                         model.eq16_2.add((Z_l_k[l][k-1]*l__sr[s-1,r-1]*model.f_l_srktb[l,s,r,k,t,b]/Vbase - (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
                                          <= H*(1-model.y_l_srkt[l,s,r,k,t]))
-
                             
 # =============================================================================
 # Investiment Constraints
@@ -1170,7 +1161,6 @@ for t in T:
                         )
                     )
 
-
 model.eq36 = pyo.ConstraintList()
 for t in T:
     for b in B:
@@ -1184,7 +1174,6 @@ for t in T:
             if s not in Omega_SS:
                 model.eq36_aux.add(model.gtio_SS_stb[s,t,b] == 0)
 
-
 # =============================================================================
 # Solver
 # =============================================================================
@@ -1193,7 +1182,6 @@ opt = SolverFactory('cplex')
 opt.options['threads'] = 16
 opt.options['mipgap'] = 1/100
 opt.solve(model, warmstart=False, tee=True)
-
 
 # =============================================================================
 # Results: Reports
@@ -1211,7 +1199,6 @@ for i in range(1,np.shape(T)[0]+1):
         }
     Yearly_Costs.append(year_aux)
 Yearly_Costs = pd.DataFrame(Yearly_Costs)
-
 
 #Binary utilization variables for feeders
 Variable_Util_l = []
@@ -1246,6 +1233,24 @@ for tr in TR:
                     }
                 Variable_Util_tr.append(var_aux)
 Variable_Util_tr = pd.DataFrame(Variable_Util_tr)
+
+#Current injections corresponding to transformers
+Current_inj_TR = []
+for tr in TR:
+    for s in Omega_N:
+        for k in K_tr[tr]:
+            for t in range(1,1+1):
+                for b in B:
+                    aux = {
+                        "TR_Type": tr,
+                        "Bus": s,
+                        "Option": k,
+                        "Stage": t,
+                        "Load_l": b,
+                        "Injection": pyo.value(model.g_tr_sktb[tr,s,k,t,b] )
+                        }
+                    Current_inj_TR.append(aux)
+Current_inj_TR = pd.DataFrame(Current_inj_TR)
 
 #Actual current flows through feeders
 Actual_C_Flow_l = []
