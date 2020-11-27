@@ -921,19 +921,19 @@ for t in T:
                 if s not in Omega_SS:
                     model.eq14_aux2.add(model.y_tr_skt[tr,s,k,t] == 0)
 
-model.eq14_aux3 = pyo.ConstraintList()
+model.eq14_aux3 = pyo.ConstraintList() # It avoids "ET" transf. on new substations
 for t in T:
     for b in B:
         for s in Omega_SSN:
             for k in K_tr['ET']:
                 model.eq14_aux3.add(model.y_tr_skt['ET',s,k,t] == 0)
 
-model.eq14_aux4 = pyo.ConstraintList()
+model.eq14_aux4 = pyo.ConstraintList() # It allows one type of transf. on existing substation nodes
 for t in T:
     for s in Omega_SSE:
         model.eq14_aux4.add(sum(sum(model.y_tr_skt[tr,s,k,t]
                     for k in K_tr[tr])
-                for tr in TR) <=1
+                for tr in TR) <= 1
             )
 
 model.eq16_1 = pyo.ConstraintList()
