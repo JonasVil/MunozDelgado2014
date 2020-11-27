@@ -1078,7 +1078,7 @@ model.eq27 = pyo.Constraint(T, rule=eq27_rule)
 # =============================================================================
 model.eq28 = pyo.ConstraintList()
 for t in T:
-    for r in Omega_LN_t:
+    for r in Omega_LN_t[t]:
         model.eq28.add(sum(sum(sum(model.y_l_srkt[l,s,r,k,t] 
                     for k in K_l[l])
                 for s in Omega_l_s[l][r-1])
@@ -1207,13 +1207,31 @@ for i in range(1,np.shape(T)[0]+1):
 Yearly_Costs = pd.DataFrame(Yearly_Costs)
 
 
+#Binary utilization variables for feeders
+Variable_Util_l = []
+for l in L: #Type of line
+    for s in Omega_N: #Buses from 
+        for r in Omega_l_s[l][s-1]: #Buses to
+            for k in K_l[l]: #Line option 
+                for t in range(1,2): #Time stage
+                    var_aux ={
+                        'T_Line': l,
+                        'From': s,
+                        'To': r,
+                        'Option': k,
+                        'Stage': t,
+                        'Decision': pyo.value(model.y_l_srkt[l,s,r,k,t])
+                        }
+                    Variable_Util_l.append(var_aux)
+Variable_Util_l = pd.DataFrame(Variable_Util_l)
+
 #Actual current flows through feeders
 Actual_C_Flow_l = []
 for l in L: #Type of line
     for s in Omega_N: #Buses from 
         for r in Omega_l_s[l][s-1]: #Buses to
             for k in K_l[l]: #Line option 
-                for t in T: #Time stage 
+                for t in range(1,2): #Time stage 
                     for b in B: #Load level
                         if pyo.value(model.f_l_srktb[l,s,r,k,t,b]) > 0:
                             actual_aux = {
@@ -1226,7 +1244,7 @@ for l in L: #Type of line
                                 'Flow': pyo.value(model.f_l_srktb[l,s,r,k,t,b])
                                 }
                             Actual_C_Flow_l.append(actual_aux) 
-                                
+Actual_C_Flow_l = pd.DataFrame(Actual_C_Flow_l)                            
 
 
 
