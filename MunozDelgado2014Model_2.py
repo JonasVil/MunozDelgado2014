@@ -582,8 +582,7 @@ model.x_l_srkt = pyo.Var(model.x_l_rule,
 def x_NT_rule(m):
     index = []
     for SS in Omega_SS:
-        K = "NT"
-        for k in K_tr[K]:
+        for k in K_tr["NT"]:
             for t in T:
                 index.append((SS,k,t))
     return index
@@ -607,10 +606,17 @@ model.x_p_skt = pyo.Var(model.x_p_rule,
                         within=pyo.Binary
     )
 
-model.x_SS_st = pyo.Var(Omega_SS,
-                        T,
+def x_SS_rule(model):
+    index = []
+    for SS in Omega_SS:
+        for t in T:
+            index.append((SS,t))
+    return index
+model.x_SS_rule = pyo.Set(dimen=2, initialize=x_SS_rule)
+model.x_SS_st = pyo.Var(model.x_SS_rule,
                         within=pyo.Binary
-    )
+                        )
+
 
 def y_l_rule(m):
     index = []
@@ -925,7 +931,7 @@ for t in T:
 model.eq14_aux3 = pyo.ConstraintList()
 for t in T:
     for b in B:
-        for s in Omega_SSE:
+        for s in Omega_SSN:
             for k in K_tr['ET']:
                 model.eq14_aux3.add(model.y_tr_skt['ET',s,k,t] == 0)
 
@@ -1224,6 +1230,22 @@ for l in L: #Type of line
                         }
                     Variable_Util_l.append(var_aux)
 Variable_Util_l = pd.DataFrame(Variable_Util_l)
+
+#Binary utilization variables for transformers
+Variable_Util_tr = []
+for tr in TR:
+    for s in Omega_N:
+        for k in K_tr[tr]:
+            for t in T:
+                var_aux ={
+                    "Trans_T":tr,
+                    "Bus":s,
+                    "Option":k,
+                    "Stage":t,
+                    "Decision":pyo.value(model.y_tr_skt[tr,s,k,t])
+                    }
+                Variable_Util_tr.append(var_aux)
+Variable_Util_tr = pd.DataFrame(Variable_Util_tr)
 
 #Actual current flows through feeders
 Actual_C_Flow_l = []
