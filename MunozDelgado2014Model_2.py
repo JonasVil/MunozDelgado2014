@@ -97,7 +97,7 @@ def power_out(k,speed):
 n_bus = 24  #Number of buses
 n_branches = 33 #Number of branches
 
-load_factor = np.array([[0.7, 0.83, 1]])
+load_factor = [0.7, 0.83, 1]
 
 #EFF = Existing Fixed Feeder
 #ERF = Existing Replaceable Feeder
@@ -184,7 +184,7 @@ wind_speed = np.array([#Load Level (m/s)
 # Sets of Indexes
 # =============================================================================
 
-B = np.arange(1, np.shape(load_factor)[1]+1, dtype=int) #Set of Load Levels 
+B = np.arange(1, len(load_factor)+1, dtype=int) #Set of Load Levels 
 T = np.arange(1, np.shape(peak_demand)[1]+1, dtype=int) #Set of Time Stages
 L = ["EFF", "ERF", "NRF", "NAF"]                        #Set of Feeder Types
 #C = Conventional 
@@ -706,10 +706,10 @@ model.Obj = pyo.Objective(expr=model.C_TPV, sense=pyo.minimize)
 # =============================================================================
 
 def C_TPV_rule(m):
-    return model.C_TPV == (sum(model.C_I_t[t]*(((1+i)**(-t))/i) for t in T
-                               )
-                           + sum((model.C_M_t[t] + model.C_E_t[t] + model.C_R_t[t] + model.C_U_t[t])*((1+i)**(-t)) for t in T
-                               )
+    return model.C_TPV == (sum(model.C_I_t[t]*(((1+i)**(-t))/i) 
+                               for t in T)
+                           + sum((model.C_M_t[t] + model.C_E_t[t] + model.C_R_t[t] + model.C_U_t[t])*((1+i)**(-t)) 
+                               for t in T)
                            + ((model.C_M_t[T[-1]] + model.C_E_t[T[-1]] + model.C_R_t[T[-1]] + model.C_U_t[T[-1]])*((1+i)**(-T[-1])/i))
                            )
 model.eq1 = pyo.Constraint(rule=C_TPV_rule)
@@ -859,7 +859,7 @@ model.eq10 = pyo.ConstraintList()
 for t in T:
     for s in Omega_N:
         for b in B:
-            model.eq10.add(model.d_U_stb[s,t,b] <= Mi__b[0][b-1]*D__st[s-1,t-1])
+            model.eq10.add(model.d_U_stb[s,t,b] <= Mi__b[b-1]*D__st[s-1,t-1])
 
 model.eq11 = pyo.ConstraintList()
 for s in Omega_N:
@@ -882,7 +882,7 @@ for t in T:
                 for s in Omega_p[p])
             for k in K_p[p])
         for p in P) 
-        <= Vare*sum(Mi__b[0,b-1]*D__st[s-1,t-1]
+        <= Vare*sum(Mi__b[b-1]*D__st[s-1,t-1]
             for s in Omega_LN_t[t])       
         )
    
@@ -899,7 +899,7 @@ for t in T:
                             + sum(sum(model.g_p_sktb[p,s,k,t,b]
                                 for k in K_p[p])
                             for p in P)
-                            - Mi__b[0,b-1]*D__st[s-1,t-1]
+                            - Mi__b[b-1]*D__st[s-1,t-1]
                             + model.d_U_stb[s,t,b]
                         )
                 )
@@ -1014,8 +1014,8 @@ for t in T:
     for l in ["NRF", "NAF"]:
         for k in K_l[l]:
             for s,r in Upsilon_l[l]:
-                model.eq23.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] ==
-                               sum(model.x_l_srkt[l,s,r,k,y]
+                model.eq23.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] 
+                               == sum(model.x_l_srkt[l,s,r,k,y]
                                    for y in range(1,t+1))
                 )
 
@@ -1025,8 +1025,8 @@ for t in T:
     for l in ["ERF"]:
         for k in K_l[l]:
             for s,r in Upsilon_l[l]:
-                model.eq24.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] ==
-                               1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
+                model.eq24.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] 
+                               == 1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
                                        for z in K_l["NRF"])
                                    for y in range(1,t+1))
                 )
@@ -1035,8 +1035,8 @@ model.eq25 = pyo.ConstraintList()
 for t in T:
     for s in Omega_SS:
         for k in K_tr["NT"]:
-            model.eq25.add(model.y_tr_skt["NT", s, k, t] <=
-                           sum(model.x_NT_skt[s,k,y]
+            model.eq25.add(model.y_tr_skt["NT", s, k, t] 
+                           <= sum(model.x_NT_skt[s,k,y]
                                for y in range(1,t+1))
                            )
 
@@ -1259,7 +1259,7 @@ for l in L: #Type of line
             for k in K_l[l]: #Line option 
                 for t in range(1,2): #Time stage 
                     for b in B: #Load level
-                        if pyo.value(model.f_l_srktb[l,s,r,k,t,b]) > 0:
+                        if pyo.value(model.f_l_srktb[l,s,r,k,t,b]) > 0.1:
                             actual_aux = {
                                 'T_Line': l,
                                 'From': s,
