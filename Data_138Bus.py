@@ -116,16 +116,123 @@ for i in range(0,load_zone.shape[0]):
     elif load_zone['Zone'][i] == 'C':
         node_zone[0,i] = 3
     
+wind_speed = np.array([#Load Level (m/s)
+                       #1    2     3   
+                      [8.53, 9.12, 10.04], #Zone A
+                      [6.13, 7.26, 7.11],  #Zone B
+                      [4.13, 5.10, 5.56]   #Zone C
+                      ])    
     
+# =============================================================================
+# Sets of Indexes
+# =============================================================================    
     
+B = np.arange(1, len(load_factor)+1, dtype=int) #Set of Load Levels 
+T = np.arange(1, np.shape(peak_demand)[1]+1, dtype=int) #Set of Time Stages
+L = ["EFF", "ERF", "NRF", "NAF"]                        #Set of Feeder Types
+#C = Conventional 
+#W = Wind Generation 
+P = ["C", "W"]                                          #Set of Generator Types
+#ET = Existing Transformer
+#NT = New Transformer
+TR = ["ET", "NT"]                                       #Set of Transformer Types    
     
+# =============================================================================
+# Sets of Alternatives
+# =============================================================================
+
+K_l = {"EFF": [1], #Sets of available alternatives for feeders
+       "ERF": [1], 
+       "NRF": [1, 2], 
+       "NAF": [1, 2]
+       } 
+
+K_p = {"C": [1, 2], #Sets of available alternatives for generators
+       "W": [1, 2]
+       } 
+
+K_tr = {"ET": [1], #Sets of available alternatives for transformers
+       "NT": [1, 2]
+       } 
+
+# =============================================================================
+# Sets of Branches
+# =============================================================================
+
+Upsilon_l = {"EFF": [],
+             "ERF": [],
+             "NRF": [],
+             "NAF": []
+             }
+
+for branch_type in L: #Set of branches with feeders of type l
+    for b in branch:
+        if b[2] == branch_type:
+            s = b[0][0]
+            r = b[0][1]
+            Upsilon_l[branch_type].append((s,r))
+Upsilon_l["NRF"] = Upsilon_l["ERF"]    
     
+# =============================================================================
+# Sets of Nodes
+# =============================================================================
+
+Omega_SS = [136, 137, 138] #Sets of nodes connected to node s by substation nodes
+Omega_SSE = [136, 137] # Fixing eq14
+Omega_SSN = [138] # Fixing eq14
+
+Omega_l_s = {"EFF": [[] for i in range(0,n_bus)], #Sets of nodes connected to node s by a feeder of type l
+             "ERF": [[] for i in range(0,n_bus)],
+             "NRF": [[] for i in range(0,n_bus)],
+             "NAF": [[] for i in range(0,n_bus)]
+             }
+
+for branch_type in L:
+    for (s,r) in Upsilon_l[branch_type]:
+        Omega_l_s[branch_type][(s,r)[0]-1].append((s,r)[1])
+        Omega_l_s[branch_type][(s,r)[1]-1].append((s,r)[0])    
     
-    
-    
-    
-    
-    
+
+Omega_LN_t = {1: [indx+1 for indx,value in enumerate(peak_demand[:, 0]) if value > 0], #Sets of nodes connected to node s by load nodes
+              2: [indx+1 for indx,value in enumerate(peak_demand[:, 1]) if value > 0],
+              3: [indx+1 for indx,value in enumerate(peak_demand[:, 2]) if value > 0],
+              4: [indx+1 for indx,value in enumerate(peak_demand[:, 3]) if value > 0],
+              5: [indx+1 for indx,value in enumerate(peak_demand[:, 4]) if value > 0],
+              6: [indx+1 for indx,value in enumerate(peak_demand[:, 5]) if value > 0],
+              7: [indx+1 for indx,value in enumerate(peak_demand[:, 6]) if value > 0],
+              8: [indx+1 for indx,value in enumerate(peak_demand[:, 7]) if value > 0],              
+              9: [indx+1 for indx,value in enumerate(peak_demand[:, 8]) if value > 0],
+              10: [indx+1 for indx,value in enumerate(peak_demand[:, 9]) if value > 0],                
+              }
+
+Omega_N = np.arange(1, n_bus+1, dtype=int) #Sets of nodes connected to node s by system nodes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     
     
