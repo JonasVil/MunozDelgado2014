@@ -207,8 +207,25 @@ Omega_LN_t = {1: [indx+1 for indx,value in enumerate(peak_demand[:, 0]) if value
 
 Omega_N = np.arange(1, n_bus+1, dtype=int) #Sets of nodes connected to node s by system nodes
 
+Omega_p = {"C": [10, 28, 38, 53, 64, 94, 108, 117, 126, 133], #Sets of nodes connected to node s by distributed generation
+           "W": [31, 52, 78, 94, 103, 113, 114, 116, 120, 122]
+           }
 
+# =============================================================================
+# Energy Costs
+# =============================================================================
 
+#Load Levels
+#         1     2   3
+C_SS_b = [57.7, 70, 85.3] #the costs of the energy supplied by all substations
+
+#DG units
+C_Ep_k = {"C": [47, 45], #Conventional DG
+          "W": [0, 0]    #Windy DG
+          }
+
+#Cost for unserved energy 
+C_U = 2000
 
 
 
