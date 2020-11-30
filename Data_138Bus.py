@@ -227,9 +227,63 @@ C_Ep_k = {"C": [47, 45], #Conventional DG
 #Cost for unserved energy 
 C_U = 2000
 
+# =============================================================================
+# Investment Costs
+# =============================================================================
 
+C_Il_k = {"NRF": [29870, 39310], #Investment cost coefficients of feeders
+          "NAF": [25030, 34920]
+          }
 
+C_INT_k = [500000, 950000] #Investment cost coefficients of new transformers
 
+C_Ip_k = {"C": [500000, 490000],  #Investment cost coefficients of generators
+          "W": [1850000, 1840000]
+          }
+
+C_ISS_s = {136: 100000,  #Investment cost coefficients of substations
+         137: 100000, 
+         138: 150000
+         }
+
+# =============================================================================
+# System's Data
+# =============================================================================
+
+D__st = peak_demand #Actual nodal peak demand
+
+Dtio_stb = np.full((np.shape(Omega_N)[0],np.shape(T)[0],np.shape(B)[0]),0,dtype=float) #fictitious nodal demand
+for s in range(np.shape(Omega_N)[0]):
+    for t in range(np.shape(T)[0]):
+        for b in range(np.shape(B)[0]):
+            if (s+1 in Omega_p["C"]) or (s+1 in Omega_p["W"] and s+1 in Omega_LN_t[t+1]):
+                Dtio_stb[s,t,b] = 1
+            else:
+                Dtio_stb[s,t,b] = 0
+                
+Fup_l_k = {"EFF": [6.28], #Upper limit for actual current flows through (MVA)
+           "ERF": [6.28],
+           "NRF": [9.00, 12],
+           "NAF": [6.28, 9]
+           }
+
+Gup_p_k = {"C": [1, 2], #Rated capacities of generators
+           "W": [0.91, 2.05]
+           }
+
+# Ref: https://wind-turbine.com/download/101655/enercon_produkt_en_06_2015.pdf
+Gmax_W_sktb = np.full((np.shape(Omega_N)[0],np.shape(K_p["W"])[0],np.shape(T)[0],np.shape(B)[0]),0,dtype=float) #maximum wind power availability.
+for s in range(np.shape(Omega_N)[0]): #Bus
+    for k in range(np.shape(K_p["W"])[0]): #Option 
+        for t in range(np.shape(T)[0]): #Stage
+            for b in range(np.shape(B)[0]): #Load Level
+                zone = node_zone[0,s]
+                speed = wind_speed[zone-1,b]
+                Gmax_W_sktb[s,k,t,b] = power_out(k+1,speed)
+
+Gup_tr_k = {"ET": [12], #Upper limit for current injections of transformers.
+            "NT": [7.5, 15]
+            }
 
 
 
