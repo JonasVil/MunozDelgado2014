@@ -14,26 +14,6 @@ import numpy as np
 import pyomo.environ as pyo
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
-
-# =============================================================================
-# def power_out(k,speed):
-#     if k == 1:
-#         coef = (0.91-0.02)/(15-4)
-#         if speed < 4:
-#             return 0
-#         elif speed <= 15 and speed >= 4:
-#             return speed*coef
-#         else:
-#             return 0.91
-#     elif k == 2:
-#         coef = (2.05-0.025)/(12-3)
-#         if speed < 3:
-#             return 0
-#         elif speed <= 12 and speed >= 3:
-#             return speed*coef
-#         else:
-#             return 2.05
-# =============================================================================
     
 def power_out(k,speed):
     if k == 1:
@@ -89,6 +69,7 @@ def power_out(k,speed):
         Pr = ((Pr_aux1+Pr_aux2)/2)/1000
        
     return Pr
+
 
 # =============================================================================
 # System Data
@@ -234,7 +215,7 @@ Upsilon_l["NRF"] = Upsilon_l["ERF"]
 # Sets of Nodes
 # =============================================================================
 
-Omega_SS = [21, 22, 24, 23] #Sets of nodes connected to node s by substation nodes
+Omega_SS = [21, 22, 23, 24] #Sets of nodes connected to node s by substation nodes
 Omega_SSE = [21, 22] # Fixing eq14
 Omega_SSN = [23, 24] # Fixing eq14
 
@@ -776,7 +757,7 @@ def eq5_rule(model,t):
                         for k in K_tr[tr])
                     for tr in TR)
 
-                    + sum(sum(sum(sum(M_l_kV[l][k-1][z-1]*l__sr[s-1,r-1]*(model.delta_l_srktbv[l,s,r,k,t,b,z] - model.delta_l_srktbv[l,r,s,k,t,b,z])
+                    + sum(sum(sum(sum(M_l_kV[l][k-1][z-1]*l__sr[s-1,r-1]*(model.delta_l_srktbv[l,s,r,k,t,b,z] + model.delta_l_srktbv[l,r,s,k,t,b,z])
                                 for z in range(1,n__V+1))
                             for s, r in Upsilon_l[l])
                         for k in K_l[l])
@@ -792,8 +773,7 @@ for tr in TR:
         for k in K_tr[tr]:
             for t in T:
                 for b in B:
-                    model.eq5_aux1.add(model.g_tr_sktb[tr,s,k,t,b] == sum(model.delta_tr_sktbv[tr,s,k,t,b,V]
-            for V in range(1,n__V+1)))
+                    model.eq5_aux1.add(model.g_tr_sktb[tr,s,k,t,b] == sum(model.delta_tr_sktbv[tr,s,k,t,b,V] for V in range(1,n__V+1)))
 
 model.eq5_aux2 = pyo.ConstraintList()
 for tr in TR:
@@ -1257,7 +1237,7 @@ for l in L: #Type of line
     for s in Omega_N: #Buses from 
         for r in Omega_l_s[l][s-1]: #Buses to
             for k in K_l[l]: #Line option 
-                for t in range(1,2): #Time stage 
+                for t in T: #Time stage 
                     for b in B: #Load level
                         if pyo.value(model.f_l_srktb[l,s,r,k,t,b]) > 0.1:
                             actual_aux = {
