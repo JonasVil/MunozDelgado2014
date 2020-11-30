@@ -14,7 +14,14 @@ import numpy as np
 import pyomo.environ as pyo
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
-from Data_24Bus import *    
+#from Data_24Bus import *  
+from Data_138Bus import *    
+
+# =============================================================================
+# DG Penetration
+# =============================================================================
+
+Vare = 0 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Model

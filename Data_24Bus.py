@@ -395,7 +395,7 @@ Delta__b = [2000, 5760, 1000] #Duration of load level b
 
 Mi__b = load_factor #Loading factor of load level b
 
-Vare = 0.25 #Penetration limit for distributed generation.
+#Vare = 0.25 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Piecewise Linearization

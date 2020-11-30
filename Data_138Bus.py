@@ -247,6 +247,24 @@ C_ISS_s = {136: 100000,  #Investment cost coefficients of substations
          }
 
 # =============================================================================
+# Maintenance Costs
+# =============================================================================
+
+C_Ml_k = {"EFF": [450], #Maintenance cost coefficients of feeders
+          "ERF": [450],
+          "NRF": [450, 450],
+          "NAF": [450, 450]
+          }
+
+C_Mp_k = {"C": [0.05*0.9*500000*1, 0.05*0.9*490000*2], #Maintenance cost coefficients of generators
+          "W": [0.05*0.9*1850000*0.91, 0.05*0.9*1840000*2.05]
+          }
+
+C_Mtr_k = {"ET": [2000], #Maintenance cost coefficients of transformers
+           "NT": [1000, 3000]
+           }
+
+# =============================================================================
 # System's Data
 # =============================================================================
 
@@ -351,7 +369,7 @@ Delta__b = [2000, 5760, 1000] #Duration of load level b
 
 Mi__b = load_factor #Loading factor of load level b
 
-Vare = 0.25 #Penetration limit for distributed generation.
+#Vare = 0.25 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Piecewise Linearization
