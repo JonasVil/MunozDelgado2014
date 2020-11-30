@@ -1,8 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Nov 30 13:32:38 2020
 
-@author: Jonas
+Data of 24 bus test case used on Distribution Expansion Planning Model proposed by Muñoz-Delgado et al. (2014).
+
+Reference:
+Muñoz-Delgado, G., Contreras, J., & Arroyo, J. M. (2014). Joint expansion planning of distributed generation and distribution networks. IEEE Transactions on Power Systems, 30(5), 2579-2590.
+DOI: 10.1109/TPWRS.2014.2364960
+
+@Code Athor: Jonas Villela de Souza
 """
 import numpy as np
 

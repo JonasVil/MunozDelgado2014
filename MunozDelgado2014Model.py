@@ -14,7 +14,7 @@ import numpy as np
 import pyomo.environ as pyo
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
-from Variables_24Bus import *    
+from Data_24Bus import *    
 
 # =============================================================================
 # Model
@@ -732,7 +732,7 @@ for t in T:
 opt = SolverFactory('cplex')
 opt.options['threads'] = 16
 opt.options['mipgap'] = 1/100
-opt.solve(model, warmstart=True, tee=True)
+opt.solve(model, warmstart=False, tee=True)
 
 # =============================================================================
 # Results: Reports
