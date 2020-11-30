@@ -7,7 +7,7 @@ Reference:
 Muñoz-Delgado, G., Contreras, J., & Arroyo, J. M. (2014). Joint expansion planning of distributed generation and distribution networks. IEEE Transactions on Power Systems, 30(5), 2579-2590.
 DOI: 10.1109/TPWRS.2014.2364960
 
-@Code Athor: Jonas Villela de SouzaPyomo
+@Code Athor: Jonas Villela de Souza
 """
 import pandas as pd
 import numpy as np
