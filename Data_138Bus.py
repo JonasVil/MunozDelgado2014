@@ -285,25 +285,109 @@ Gup_tr_k = {"ET": [12], #Upper limit for current injections of transformers.
             "NT": [7.5, 15]
             }
 
+Vbase = 13.8 #kV
+V_ = 0.95*Vbase #Lower bound for nodal voltages
+Vup = 1.05*Vbase #Upper bound for nodal voltages
+V_SS = 1.05*Vbase #Voltage at the substations
+
+l__sr = np.full((np.shape(Omega_N)[0],np.shape(Omega_N)[0]),0,dtype=float) #Feeder length.
+for b in branch:
+    s, r = b[0]
+    l__sr[s-1,r-1] = b[1]
+    l__sr[r-1,s-1] = b[1]
+
+n__DG = np.add.reduce([np.shape(Omega_p[p]) for p in P])[0] #Number of candidate nodes for installation of distributed generation
+
+n__T = np.shape(T)[0] #number of time stages
+
+pf = 0.9 #System power factor
+
+H = Vup - V_  #Ref: DOI: 10.1109/TPWRS.2017.2764331
+
+# =============================================================================
+# Assets Data
+# =============================================================================
+
+i = 7.1/100 #Annual interest rate.
+
+IB__t = [5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000] #Investment budget for stage t
+
+Eta_l = {"NRF": 25, #Lifetimes of feeders in year
+         "NAF": 25
+        }
+
+Eta_NT = 15 #Lifetime of new transformers
+
+Eta_p = {"C": 20, #Lifetime of generators
+         "W": 20
+         }
+
+Eta_SS = 100 #Lifetime of substations
+
+RR_l = {"NRF": (i*(1+i)**Eta_l["NRF"])/((1+i)**Eta_l["NRF"] - 1), #Capital recovery rates for investment in feeders
+        "NAF": (i*(1+i)**Eta_l["NAF"])/((1+i)**Eta_l["NAF"] - 1) 
+        }
+
+RR_NT = (i*(1+i)**Eta_NT)/((1+i)**Eta_NT - 1) #Capital recovery rates for investment in new transformers
+
+RR_p =  {"C": (i*(1+i)**Eta_p["C"])/((1+i)**Eta_p["C"] - 1), #Capital recovery rates for investment in generators
+         "W": (i*(1+i)**Eta_p["W"])/((1+i)**Eta_p["W"] - 1)
+         }
 
 
+RR_SS = i #Capital recovery rates for investment in substations.
+
+Z_l_k = {"EFF": [0.557], #Unitary impedance magnitude of feeders
+         "ERF": [0.557],
+         "NRF": [0.478, 0.423],
+         "NAF": [0.557, 0.478] 
+         }
+
+Z_tr_k = {"ET": [0.16], #impedance magnitude of transformers
+          "NT": [0.25, 0.13]
+          }
+
+Delta__b = [2000, 5760, 1000] #Duration of load level b
+
+Mi__b = load_factor #Loading factor of load level b
+
+Vare = 0.25 #Penetration limit for distributed generation.
+
+# =============================================================================
+# Piecewise Linearization
+# =============================================================================
+
+n__V = 3 #number of blocks of the piecewise linear energy losses
+
+M_l_kV = {"EFF": [[]], #Slope of block V of the piecewise linear energy losses for feeders
+          "ERF": [[]],
+          "NRF": [[], []],
+          "NAF": [[], []]
+          }
+
+A_l_kV = {"EFF": [[]], #Width of block V of the piecewise linear energy losses for feeders
+          "ERF": [[]],
+          "NRF": [[], []],
+          "NAF": [[], []]
+          }
+
+for l in L:
+    for k in K_l[l]:
+        for V in range(1,n__V+1,1):
+            M_l_kV[l][k-1].append((2*V - 1)*Z_l_k[l][k-1]*Fup_l_k[l][k-1]/(n__V*(Vbase**2)))
+            A_l_kV[l][k-1].append(Fup_l_k[l][k-1]/n__V)
 
 
+M_tr_kV = {"ET": [[]], #Slope of block V of the piecewise linear energy losses for transformers
+           "NT": [[],[]]
+           }
 
+A_tr_kV = {"ET": [[]], #Width of block V of the piecewise linear energy losses for transformers
+           "NT": [[],[]]
+           }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
-    
+for tr in TR:
+    for k in K_tr[tr]:
+        for V in range(1,n__V+1,1):
+            M_tr_kV[tr][k-1].append((2*V - 1)*Z_tr_k[tr][k-1]*Gup_tr_k[tr][k-1]/(n__V*(V_SS**2)))
+            A_tr_kV[tr][k-1].append(Gup_tr_k[tr][k-1]/n__V)

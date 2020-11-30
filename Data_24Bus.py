@@ -352,7 +352,6 @@ H = Vup - V_  #Ref: DOI: 10.1109/TPWRS.2017.2764331
 # Assets Data
 # =============================================================================
 
-
 i = 7.1/100 #Annual interest rate.
 
 IB__t = [6000000, 6000000, 6000000] #Investment budget for stage t
@@ -409,7 +408,6 @@ M_l_kV = {"EFF": [[]], #Slope of block V of the piecewise linear energy losses f
           "NRF": [[], []],
           "NAF": [[], []]
           }
-
 
 A_l_kV = {"EFF": [[]], #Width of block V of the piecewise linear energy losses for feeders
           "ERF": [[]],
