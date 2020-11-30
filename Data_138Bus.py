@@ -75,6 +75,13 @@ def power_out(k,speed):
 n_bus = 138  #Number of buses
 n_branches = 151 #Number of branches
 
+load_factor = [0.7, 0.83, 1]
+
+#EFF = Existing Fixed Feeder
+#ERF = Existing Replaceable Feeder
+#NRF = New Replacement Feeder
+#NAF = New Added Feeder
+
 line_data = pd.read_csv("138_line_data.csv")
 branch = []
 for i in range(line_data.shape[0]):
@@ -90,9 +97,24 @@ for i in range(line_data.shape[0]):
     l = line_data['Lenght'][i]
     tYpe = line_data['Type'][i]
     branch.append(((s,r), l, tYpe))
-    
-    
-    
+
+load_zone = pd.read_csv("138_load_zone.csv")
+
+peak_demand = np.full((load_zone.shape[0],10),0,dtype=float)
+for i in range(0,load_zone.shape[0]):
+    for j in range(1,10+1):
+        peak_demand[i,j-1] = load_zone[str(j)][i]
+
+#Zones A = 1, B = 2, C = 3
+               #Buses= 1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 ... 138   
+node_zone = np.full((1,load_zone.shape[0]),0,dtype=int) 
+for i in range(0,load_zone.shape[0]):
+    if load_zone['Zone'][i] == 'A':
+        node_zone[0,i] = 1 
+    elif load_zone['Zone'][i] == 'B':
+        node_zone[0,i] = 2 
+    elif load_zone['Zone'][i] == 'C':
+        node_zone[0,i] = 3
     
     
     
