@@ -87,12 +87,9 @@ branch = []
 for i in range(line_data.shape[0]):
     s = line_data['From'][i]
     r = line_data['to'][i]
-    l = line_data['Lenght'][i]
+    l = np.round(line_data['Lenght'][i],2)
     tYpe = line_data['Type'][i]
-    if s < r:
-        branch.append(((s,r), l, tYpe))
-    else:
-        branch.append(((r,s), l, tYpe))
+    branch.append(((s,r), l, tYpe))
 
 load_zone = pd.read_csv("138_load_zone.csv")
 
@@ -238,9 +235,9 @@ C_Ip_k = {"C": [500000, 490000],  #Investment cost coefficients of generators
           }
 
 C_ISS_s = {136: 100000,  #Investment cost coefficients of substations
-         137: 100000, 
-         138: 150000
-         }
+           137: 100000, 
+           138: 150000
+          }
 
 # =============================================================================
 # Maintenance Costs
@@ -270,7 +267,7 @@ Dtio_stb = np.full((np.shape(Omega_N)[0],np.shape(T)[0],np.shape(B)[0]),0,dtype=
 for s in range(np.shape(Omega_N)[0]):
     for t in range(np.shape(T)[0]):
         for b in range(np.shape(B)[0]):
-            if (s+1 in Omega_p["C"]) or (s+1 in Omega_p["W"] and s+1 in Omega_LN_t[t+1]):
+            if s+1 in Omega_p["C"] or s+1 in Omega_p["W"] and s+1 in Omega_LN_t[t+1]:
                 Dtio_stb[s,t,b] = 1
             else:
                 Dtio_stb[s,t,b] = 0

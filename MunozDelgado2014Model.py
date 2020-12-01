@@ -21,7 +21,7 @@ from Data_24Bus import *
 # DG Penetration
 # =============================================================================
 
-Vare = 1 #Penetration limit for distributed generation.
+Vare = 0.25 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Model

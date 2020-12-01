@@ -300,7 +300,7 @@ Dtio_stb = np.full((np.shape(Omega_N)[0],np.shape(T)[0],np.shape(B)[0]),0,dtype=
 for s in range(np.shape(Omega_N)[0]):
     for t in range(np.shape(T)[0]):
         for b in range(np.shape(B)[0]):
-            if (s+1 in Omega_p["C"]) or (s+1 in Omega_p["W"] and s+1 in Omega_LN_t[t+1]):
+            if s+1 in Omega_p["C"] or s+1 in Omega_p["W"] and s+1 in Omega_LN_t[t+1]:
                 Dtio_stb[s,t,b] = 1
             else:
                 Dtio_stb[s,t,b] = 0
