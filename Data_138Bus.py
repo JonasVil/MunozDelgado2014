@@ -267,18 +267,18 @@ Dtio_stb = np.full((np.shape(Omega_N)[0],np.shape(T)[0],np.shape(B)[0]),0,dtype=
 for s in range(np.shape(Omega_N)[0]):
     for t in range(np.shape(T)[0]):
         for b in range(np.shape(B)[0]):
-            if s+1 in Omega_p["C"] or s+1 in Omega_p["W"] and s+1 in Omega_LN_t[t+1]:
+            if (s+1 in Omega_p["C"] or s+1 in Omega_p["W"]) and s+1 in Omega_LN_t[t+1]:
                 Dtio_stb[s,t,b] = 1
             else:
                 Dtio_stb[s,t,b] = 0
                 
 Fup_l_k = {"EFF": [6.28], #Upper limit for actual current flows through (MVA)
            "ERF": [6.28],
-           "NRF": [9.00, 12],
-           "NAF": [6.28, 9]
+           "NRF": [9.00, 12.00],
+           "NAF": [6.28, 9.00]
            }
 
-Gup_p_k = {"C": [1, 2], #Rated capacities of generators
+Gup_p_k = {"C": [1.00, 2.00], #Rated capacities of generators
            "W": [0.91, 2.05]
            }
 

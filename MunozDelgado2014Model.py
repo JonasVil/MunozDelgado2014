@@ -14,14 +14,14 @@ import numpy as np
 import pyomo.environ as pyo
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
-from Data_24Bus import *  
-#from Data_138Bus import *    
+#from Data_24Bus import *  
+from Data_138Bus import *    
 
 # =============================================================================
 # DG Penetration
 # =============================================================================
 
-Vare = 0.25 #Penetration limit for distributed generation.
+Vare = 0 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Model
@@ -295,7 +295,7 @@ def eq2_rule(model,t):
 model.eq2 = pyo.Constraint(T, rule=eq2_rule)
 
 def eq3_rule(model,t):
-    return model.C_M_t[t] == (sum(sum(sum(C_Ml_k[l][k-1]*(model.y_l_srkt[l,s,r,k,t] - model.y_l_srkt[l,r,s,k,t])
+    return model.C_M_t[t] == (sum(sum(sum(C_Ml_k[l][k-1]*(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t])
                     for s,r in Upsilon_l[l])
                 for k in K_l[l])
             for l in L)
@@ -578,6 +578,7 @@ for t in T:
                                    for y in range(1,t+1))
                 )
 
+
 #Eq. updated #Ref: DOI: 10.1109/TSG.2016.2560339
 model.eq24 = pyo.ConstraintList()
 for t in T:
@@ -738,7 +739,7 @@ for t in T:
 
 opt = SolverFactory('cplex')
 opt.options['threads'] = 16
-opt.options['mipgap'] = 1/100
+opt.options['mipgap'] = 0.35/100
 opt.solve(model, warmstart=False, tee=True)
 
 # =============================================================================
@@ -749,11 +750,11 @@ opt.solve(model, warmstart=False, tee=True)
 Yearly_Costs = []
 for i in range(1,np.shape(T)[0]+1):
     year_aux = {
-                'Investment':np.round(pyo.value(model.C_I_t[i])/1e6,4),
-                'Maintenance':np.round(pyo.value(model.C_M_t[i])/1e6,4),
-                'Production':np.round(pyo.value(model.C_E_t[i])/1e6,4),
-                'Losses':np.round(pyo.value(model.C_R_t[i])/1e6,4),
-                'Unserved_energy':np.round(pyo.value(model.C_U_t[i])/1e6,4)
+                'Investment':np.round(pyo.value(model.C_I_t[i])/1e6,2),
+                'Maintenance':np.round(pyo.value(model.C_M_t[i])/1e6,2),
+                'Production':np.round(pyo.value(model.C_E_t[i])/1e6,2),
+                'Losses':np.round(pyo.value(model.C_R_t[i])/1e6,2),
+                'Unserved_energy':np.round(pyo.value(model.C_U_t[i])/1e6,2)
         }
     Yearly_Costs.append(year_aux)
 Yearly_Costs = pd.DataFrame(Yearly_Costs)
