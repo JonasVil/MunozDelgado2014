@@ -14,14 +14,14 @@ import numpy as np
 import pyomo.environ as pyo
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
-#from Data_24Bus import *  
-from Data_138Bus import *    
+from Data_24Bus import *  
+#from Data_138Bus import *    
 
 # =============================================================================
 # DG Penetration
 # =============================================================================
 
-Vare = 0 #Penetration limit for distributed generation.
+Vare = 1 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Model
@@ -764,7 +764,7 @@ for l in L: #Type of line
     for s in Omega_N: #Buses from 
         for r in Omega_l_s[l][s-1]: #Buses to
             for k in K_l[l]: #Line option 
-                for t in range(1,2): #Time stage
+                for t in T: #Time stage
                     var_aux ={
                         'T_Line': l,
                         'From': s,
@@ -830,14 +830,3 @@ for l in L: #Type of line
                                 }
                             Actual_C_Flow_l.append(actual_aux) 
 Actual_C_Flow_l = pd.DataFrame(Actual_C_Flow_l)                            
-
-
-
-
-
-
-
-
-
-
-

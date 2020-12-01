@@ -85,18 +85,14 @@ load_factor = [0.7, 0.83, 1]
 line_data = pd.read_csv("138_line_data.csv")
 branch = []
 for i in range(line_data.shape[0]):
-    if line_data['From'][i] == 201:
-        s = 136
-    elif line_data['From'][i] == 202:
-        s = 137
-    elif line_data['From'][i] == 203:
-        s = 138
-    else:
-        s = line_data['From'][i]
+    s = line_data['From'][i]
     r = line_data['to'][i]
     l = line_data['Lenght'][i]
     tYpe = line_data['Type'][i]
-    branch.append(((s,r), l, tYpe))
+    if s < r:
+        branch.append(((s,r), l, tYpe))
+    else:
+        branch.append(((r,s), l, tYpe))
 
 load_zone = pd.read_csv("138_load_zone.csv")
 
@@ -152,7 +148,7 @@ K_p = {"C": [1, 2], #Sets of available alternatives for generators
        } 
 
 K_tr = {"ET": [1], #Sets of available alternatives for transformers
-       "NT": [1, 2]
+        "NT": [1, 2]
        } 
 
 # =============================================================================
