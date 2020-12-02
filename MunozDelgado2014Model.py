@@ -21,7 +21,7 @@ from Data_138Bus import *
 # DG Penetration
 # =============================================================================
 
-Vare = 0 #Penetration limit for distributed generation.
+Vare = 0.25 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Model
@@ -739,7 +739,7 @@ for t in T:
 
 opt = SolverFactory('cplex')
 opt.options['threads'] = 16
-opt.options['mipgap'] = 0.35/100
+opt.options['mipgap'] = 1/100
 opt.solve(model, warmstart=False, tee=True)
 
 # =============================================================================

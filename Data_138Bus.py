@@ -96,7 +96,7 @@ load_zone = pd.read_csv("138_load_zone.csv")
 peak_demand = np.full((load_zone.shape[0],10),0,dtype=float)
 for i in range(0,load_zone.shape[0]):
     for j in range(1,10+1):
-        peak_demand[i,j-1] = load_zone[str(j)][i]
+        peak_demand[i,j-1] = load_zone[str(j)][i]/1000
 
 #Zones A = 1, B = 2, C = 3
                #Buses= 1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 ... 138   
