@@ -14,14 +14,14 @@ import numpy as np
 import pyomo.environ as pyo
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
-#from Data_24Bus import *  
-from Data_138Bus import *    
+from Data_24Bus import *  
+#from Data_138Bus import *    
 
 # =============================================================================
 # DG Penetration
 # =============================================================================
 
-Vare = 0.25 #Penetration limit for distributed generation.
+Vare = 0 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Model
@@ -176,7 +176,6 @@ model.x_SS_st = pyo.Var(model.x_SS_rule,
                         within=pyo.Binary
                         )
 
-
 def y_l_rule(m):
     index = []
     for l in L:
@@ -253,13 +252,11 @@ model.delta_tr_sktbv = pyo.Var(model.delta_tr_rule,
                                bounds=(0.0,None)
     )
 
-
 # =============================================================================
 # Objective Function
 # =============================================================================
 
 model.Obj = pyo.Objective(expr=model.C_TPV, sense=pyo.minimize)
-
 
 # =============================================================================
 # Costs Constraints
@@ -396,6 +393,10 @@ model.eq6 = pyo.Constraint(T, rule=eq6_rule)
 def eq7_rule(model, s, t, b):
     return pyo.inequality(V_ ,model.V_stb[s,t,b], Vup)
 model.eq7 = pyo.Constraint(Omega_N, T, B, rule=eq7_rule)
+
+def eq7_aux_rule(model, s, t, b):
+    return model.V_stb[s,t,b] == V_SS
+model.eq7_aux = pyo.Constraint(Omega_SS, T, B, rule=eq7_aux_rule)
 
 model.eq8 = pyo.ConstraintList()
 for l in L:
@@ -578,7 +579,6 @@ for t in T:
                                    for y in range(1,t+1))
                 )
 
-
 #Eq. updated #Ref: DOI: 10.1109/TSG.2016.2560339
 model.eq24 = pyo.ConstraintList()
 for t in T:
@@ -739,7 +739,7 @@ for t in T:
 
 opt = SolverFactory('cplex')
 opt.options['threads'] = 16
-opt.options['mipgap'] = 1/100
+opt.options['mipgap'] = 0.5/100
 opt.solve(model, warmstart=False, tee=True)
 
 # =============================================================================
@@ -750,11 +750,11 @@ opt.solve(model, warmstart=False, tee=True)
 Yearly_Costs = []
 for i in range(1,np.shape(T)[0]+1):
     year_aux = {
-                'Investment':np.round(pyo.value(model.C_I_t[i])/1e6,2),
-                'Maintenance':np.round(pyo.value(model.C_M_t[i])/1e6,2),
-                'Production':np.round(pyo.value(model.C_E_t[i])/1e6,2),
-                'Losses':np.round(pyo.value(model.C_R_t[i])/1e6,2),
-                'Unserved_energy':np.round(pyo.value(model.C_U_t[i])/1e6,2)
+                'Investment':np.round(pyo.value(model.C_I_t[i])/1e6,4),
+                'Maintenance':np.round(pyo.value(model.C_M_t[i])/1e6,4),
+                'Production':np.round(pyo.value(model.C_E_t[i])/1e6,4),
+                'Losses':np.round(pyo.value(model.C_R_t[i])/1e6,4),
+                'Unserved_energy':np.round(pyo.value(model.C_U_t[i])/1e6,4)
         }
     Yearly_Costs.append(year_aux)
 Yearly_Costs = pd.DataFrame(Yearly_Costs)
@@ -766,15 +766,16 @@ for l in L: #Type of line
         for r in Omega_l_s[l][s-1]: #Buses to
             for k in K_l[l]: #Line option 
                 for t in T: #Time stage
-                    var_aux ={
-                        'T_Line': l,
-                        'From': s,
-                        'To': r,
-                        'Option': k,
-                        'Stage': t,
-                        'Decision': pyo.value(model.y_l_srkt[l,s,r,k,t])
-                        }
-                    Variable_Util_l.append(var_aux)
+                    if pyo.value(model.y_l_srkt[l,s,r,k,t]) == 1:
+                        var_aux ={
+                            'T_Line': l,
+                            'From': s,
+                            'To': r,
+                            'Option': k,
+                            'Stage': t,
+                            'Decision': pyo.value(model.y_l_srkt[l,s,r,k,t])
+                            }
+                        Variable_Util_l.append(var_aux)
 Variable_Util_l = pd.DataFrame(Variable_Util_l)
 
 #Binary utilization variables for transformers
@@ -783,15 +784,33 @@ for tr in TR:
     for s in Omega_N:
         for k in K_tr[tr]:
             for t in T:
-                var_aux ={
-                    "Trans_T":tr,
-                    "Bus":s,
-                    "Option":k,
-                    "Stage":t,
-                    "Decision":pyo.value(model.y_tr_skt[tr,s,k,t])
-                    }
-                Variable_Util_tr.append(var_aux)
+                if pyo.value(model.y_tr_skt[tr,s,k,t]) == 1:
+                    var_aux ={
+                        "Trans_T":tr,
+                        "Bus":s,
+                        "Option":k,
+                        "Stage":t,
+                        "Decision":pyo.value(model.y_tr_skt[tr,s,k,t])
+                        }
+                    Variable_Util_tr.append(var_aux)
 Variable_Util_tr = pd.DataFrame(Variable_Util_tr)
+
+#Binary utilization variables for DGs
+Variable_Util_dg = []
+for p in P:
+    for O in Omega_N:
+        for K in K_p[p]:
+            for t in T:
+                if pyo.value(model.y_p_skt[p,O,K,t]) == 1:
+                    var_aux ={
+                        "DG_P":p,
+                        "Bus":O,
+                        "Option":K,
+                        "Stage":t,
+                        "Decision":pyo.value(model.y_p_skt[p,O,K,t])
+                        }
+                    Variable_Util_dg.append(var_aux)
+Variable_Util_dg = pd.DataFrame(Variable_Util_dg)
 
 #Current injections corresponding to transformers
 Current_inj_TR = []
@@ -800,16 +819,36 @@ for tr in TR:
         for k in K_tr[tr]:
             for t in T:
                 for b in B:
-                    aux = {
-                        "TR_Type": tr,
-                        "Bus": s,
-                        "Option": k,
-                        "Stage": t,
-                        "Load_l": b,
-                        "Injection": pyo.value(model.g_tr_sktb[tr,s,k,t,b] )
-                        }
-                    Current_inj_TR.append(aux)
+                    if pyo.value(model.g_tr_sktb[tr,s,k,t,b]) > 0:
+                        aux = {
+                            "TR_Type": tr,
+                            "Bus": s,
+                            "Option": k,
+                            "Stage": t,
+                            "Load_l": b,
+                            "Injection": pyo.value(model.g_tr_sktb[tr,s,k,t,b])
+                            }
+                        Current_inj_TR.append(aux)
 Current_inj_TR = pd.DataFrame(Current_inj_TR)
+
+#Current injections corresponding to DG
+Current_inj_DG = []
+for p in P:
+    for O in Omega_N:
+        for kp in K_p[p]:
+            for t in T:
+                for b in B:
+                    if pyo.value(model.g_p_sktb[p,O,kp,t,b]) > 0:
+                        aux = {
+                            "DG_Type": p,
+                            "Bus": O,
+                            "Option":kp,
+                            "Stage":t,
+                            "Load_l":b,
+                            "Injection":pyo.value(model.g_p_sktb[p,O,kp,t,b])
+                            }
+                        Current_inj_DG.append(aux)
+Current_inj_DG = pd.DataFrame(Current_inj_DG)
 
 #Actual current flows through feeders
 Actual_C_Flow_l = []
