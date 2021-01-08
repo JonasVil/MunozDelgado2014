@@ -1,6 +1,4 @@
 """
-Created on Fri Nov 13 14:57:26 2020
-
 Implementation on Pyomo of Distribution Expansion Planning Model proposed by Muñoz-Delgado et al. (2014).
 
 Reference:
