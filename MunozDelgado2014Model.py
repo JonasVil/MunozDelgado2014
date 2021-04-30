@@ -21,7 +21,7 @@ from Data_24Bus import *
 # DG Penetration
 # =============================================================================
 
-Vare = 0 #Penetration limit for distributed generation.
+Vare = 0.25 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Model
@@ -49,7 +49,7 @@ model.C_U_t = pyo.Var(T,
                       bounds=(0.0,None)
                       )
 
-model.C_I_t = pyo.Var(T, #Investment
+model.C_I_t = pyo.Var(T,
                       bounds=(0.0,None)
                       )
 
@@ -394,9 +394,11 @@ def eq7_rule(model, s, t, b):
     return pyo.inequality(V_ ,model.V_stb[s,t,b], Vup)
 model.eq7 = pyo.Constraint(Omega_N, T, B, rule=eq7_rule)
 
-def eq7_aux_rule(model, s, t, b):
-    return model.V_stb[s,t,b] == V_SS
-model.eq7_aux = pyo.Constraint(Omega_SS, T, B, rule=eq7_aux_rule)
+# =============================================================================
+# def eq7_aux_rule(model, s, t, b):
+#     return model.V_stb[s,t,b] == V_SS
+# model.eq7_aux = pyo.Constraint(Omega_SS, T, B, rule=eq7_aux_rule)
+# =============================================================================
 
 model.eq8 = pyo.ConstraintList()
 for l in L:
@@ -514,7 +516,7 @@ for t in T:
                     for k in K_l[l]:
                         model.eq16_2.add((Z_l_k[l][k-1]*l__sr[s-1,r-1]*model.f_l_srktb[l,s,r,k,t,b]/Vbase - (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
                                          <= H*(1-model.y_l_srkt[l,s,r,k,t]))
-                            
+                          
 # =============================================================================
 # Investiment Constraints
 # =============================================================================
@@ -739,7 +741,7 @@ for t in T:
 
 opt = SolverFactory('cplex')
 opt.options['threads'] = 16
-opt.options['mipgap'] = 0.5/100
+opt.options['mipgap'] = 1/100
 opt.solve(model, warmstart=False, tee=True)
 
 # =============================================================================
@@ -801,7 +803,7 @@ for p in P:
     for O in Omega_N:
         for K in K_p[p]:
             for t in T:
-                if pyo.value(model.y_p_skt[p,O,K,t]) == 1:
+                if int(pyo.value(model.y_p_skt[p,O,K,t])) == 1:
                     var_aux ={
                         "DG_P":p,
                         "Bus":O,
@@ -870,3 +872,24 @@ for l in L: #Type of line
                                 }
                             Actual_C_Flow_l.append(actual_aux) 
 Actual_C_Flow_l = pd.DataFrame(Actual_C_Flow_l)                            
+
+# =============================================================================
+# Tests
+# =============================================================================
+Test_1_eq30 = []
+for t in T:
+    for b in B:
+        for s in Omega_N:
+            aux = {
+                "Valor_1": sum(sum(sum(pyo.value(model.ftio_l_srktb[l,s,r,k,t,b]) - pyo.value(model.ftio_l_srktb[l,r,s,k,t,b])
+                        for r in Omega_l_s[l][s-1])
+                    for k in K_l[l])
+                for l in L),
+                "Valor_2": pyo.value(model.gtio_SS_stb[s,t,b]) - Dtio_stb[s-1,t-1,b-1]
+                }
+            Test_1_eq30.append(aux)
+Test_1_eq30 = pd.DataFrame(Test_1_eq30)
+
+                
+
+
