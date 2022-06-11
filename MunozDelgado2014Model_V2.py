@@ -35,14 +35,17 @@ model = pyo.ConcreteModel()
 
 model.T = pyo.Set(initialize=T) #Set of time stages.
 model.L = pyo.Set(initialize=L) #Set of feeder types.
+model.L_l = pyo.Set(initialize=['NRF','NAF']) #Set of feeder types.
 model.P = pyo.Set(initialize=P) #Set of Generator Types
-#model.K_p = 
+model.K_p = pyo.Set(initialize=[1,2]) #Set of DG options
+model.K_l = pyo.Set(initialize=[1,2]) #Set of lines options
+model.Omega_SS = pyo.Set(initialize=Omega_SS) #Sets of substation nodes
 
 # =============================================================================
 # Parameters
 # =============================================================================
 
-model.i = pyo.Param(initialize=i) #Annual interest rate.
+model.i = pyo.Param(initialize=i, domain=Reals) #Annual interest rate.
 def RR_l_rule(model, l):
     if l in ['NRF','NAF']:
         index = RR_l[l]
@@ -55,17 +58,14 @@ model.RR_NT = pyo.Param(initialize=RR_NT, domain=Reals) #Capital recovery rates 
 def RR_p_rule(model, p):
     return RR_p[p]
 model.RR_p = pyo.Param(model.P, initialize=RR_p_rule, domain=Reals) #Capital recovery rates for investment in generators
+def C_Il_k_rule(model, typ, l):
+    return C_Il_k[typ][l-1]
+model.C_Il_k = pyo.Param(model.L_l, model.K_l, initialize=C_Il_k_rule)           
+def C_ISS_s_rule(model, ss):
+    return C_ISS_s[ss] 
+model.C_ISS_s = pyo.Param(model.Omega_SS, initialize=C_ISS_s_rule)
 
-# =============================================================================
-# def C_Il_k_rule(model, l):
-#     if l in ['NRF','NAF']:
-#     return 
-# =============================================================================
-
-C_Il_k = {"NRF": [19140, 29870], #Investment cost coefficients of feeders
-          "NAF": [15020, 25030]
-          }
-    
+   
 # =============================================================================
 # Variables
 # =============================================================================
