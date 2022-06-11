@@ -19,7 +19,7 @@ from Data_24Bus import *
 # DG Penetration
 # =============================================================================
 
-Vare = 0.25 #Penetration limit for distributed generation.
+Vare = 0 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Model
@@ -565,7 +565,7 @@ for t in T:
         for k in K_l[l]:
             for s,r in Upsilon_l[l]:
                 model.eq22.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t]
-                               == 1
+                               <= 1
                 )
 
 #Eq. updated #Ref: DOI: 10.1109/TSG.2016.2560339
@@ -575,7 +575,7 @@ for t in T:
         for k in K_l[l]:
             for s,r in Upsilon_l[l]:
                 model.eq23.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] 
-                               == sum(model.x_l_srkt[l,s,r,k,y]
+                               <= sum(model.x_l_srkt[l,s,r,k,y]
                                    for y in range(1,t+1))
                 )
 
@@ -586,7 +586,7 @@ for t in T:
         for k in K_l[l]:
             for s,r in Upsilon_l[l]:
                 model.eq24.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] 
-                               == 1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
+                               <= 1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
                                        for z in K_l["NRF"])
                                    for y in range(1,t+1))
                 )
@@ -737,7 +737,7 @@ for t in T:
 # Solver
 # =============================================================================
 
-opt = SolverFactory('cplex')
+opt = SolverFactory('gurobi')
 opt.options['threads'] = 16
 opt.options['mipgap'] = 1/100
 opt.solve(model, warmstart=False, tee=True)
@@ -747,17 +747,30 @@ opt.solve(model, warmstart=False, tee=True)
 # =============================================================================
 
 #Results - 
+i = 7.1/100
 Yearly_Costs = []
-for i in range(1,np.shape(T)[0]+1):
+for t in range(1,np.shape(T)[0]+1):
     year_aux = {
-                'Investment':np.round(pyo.value(model.C_I_t[i])/1e6,4),
-                'Maintenance':np.round(pyo.value(model.C_M_t[i])/1e6,4),
-                'Production':np.round(pyo.value(model.C_E_t[i])/1e6,4),
-                'Losses':np.round(pyo.value(model.C_R_t[i])/1e6,4),
-                'Unserved_energy':np.round(pyo.value(model.C_U_t[i])/1e6,4)
+                'Investment':np.round(pyo.value(model.C_I_t[t])/1e6,4),
+                'Maintenance':np.round(pyo.value(model.C_M_t[t])/1e6,4),
+                'Production':np.round(pyo.value(model.C_E_t[t])/1e6,4),
+                'Losses':np.round(pyo.value(model.C_R_t[t])/1e6,4),
+                'Unserved Energy':np.round(pyo.value(model.C_U_t[t])/1e6,4)
         }
     Yearly_Costs.append(year_aux)
 Yearly_Costs = pd.DataFrame(Yearly_Costs)
+
+i = 7.1/100
+Results_Table = [{
+    'Investment': np.round(pyo.value(sum(model.C_I_t[t]*(((1+i)**(-t))/i) for t in T))/1e6,4),
+    'Maintenance': np.round(pyo.value(sum(model.C_M_t[t]*(((1+i)**(-t))) for t in T) + model.C_M_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+    'Production': np.round(pyo.value(sum(model.C_E_t[t]*(((1+i)**(-t))) for t in T) + model.C_E_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+    'Losses': np.round(pyo.value(sum(model.C_R_t[t]*(((1+i)**(-t))) for t in T) + model.C_R_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+    'Unserved Energy': np.round(pyo.value(sum(model.C_U_t[t]*(((1+i)**(-t))) for t in T) + model.C_U_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+    'C_TPV': np.round(pyo.value(model.C_TPV)/1e6,4)
+    }]
+Results_Table = pd.DataFrame(Results_Table)
+
 
 #Binary utilization variables for feeders
 Variable_Util_l = []

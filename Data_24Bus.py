@@ -379,7 +379,7 @@ RR_p =  {"C": (i*(1+i)**Eta_p["C"])/((1+i)**Eta_p["C"] - 1), #Capital recovery r
          }
 
 
-RR_SS = i #Capital recovery rates for investment in substations.
+RR_SS = (i*(1+i)**Eta_SS)/((1+i)**Eta_SS - 1) #Capital recovery rates for investment in substations.
 
 Z_l_k = {"EFF": [0.732], #Unitary impedance magnitude of feeders
          "ERF": [0.732],
