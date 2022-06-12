@@ -126,7 +126,16 @@ model.x_l_srkt = pyo.Var(model.x_l_rule,
                          within=pyo.Binary
     ) #Binary investment variables for feeders
 
-
+def x_SS_rule(model):
+    index = []
+    for s in model.Omega_SS:
+        for t in model.T:
+            index.append((s,t))
+    return index
+model.x_SS_rule = pyo.Set(dimen=2, initialize=x_SS_rule)
+model.x_SS_st = pyo.Var(model.x_SS_rule,
+                        within=pyo.Binary
+                        )
 
 # =============================================================================
 # Objective Function
