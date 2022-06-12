@@ -141,12 +141,8 @@ def C_Ep_k_rule(model, p, k):
     return C_Ep_k[p][k-1]
 model.C_Ep_k = pyo.Param(model.P, model.K_p['C'], initialize=C_Ep_k_rule) #the costs of the energy supplied by DG units.
 #DG units
-C_Ep_k = {"C": [47, 45], #Conventional DG
-          "W": [0, 0]    #Windy DG
-          }
 
-#Cost for unserved energy 
-C_U = 2000
+model.C_U = pyo.Param(initialize=C_U) #Cost for unserved energy 
 
 # =============================================================================
 # Variables
