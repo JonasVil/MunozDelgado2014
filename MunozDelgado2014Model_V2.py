@@ -45,11 +45,6 @@ def Omega_l_s_rule(model, l, s):
     return Omega_l_s[l][s-1]
 model.Omega_l_s = pyo.Set(model.L, model.Omega_N, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
 
-Omega_l_s = {"EFF": [[] for i in range(0,n_bus)], #Sets of nodes connected to node s by a feeder of type l
-             "ERF": [[] for i in range(0,n_bus)],
-             "NRF": [[] for i in range(0,n_bus)],
-             "NAF": [[] for i in range(0,n_bus)]
-             }
 # =============================================================================
 # Parameters
 # =============================================================================

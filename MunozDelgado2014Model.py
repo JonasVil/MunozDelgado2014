@@ -130,7 +130,6 @@ def x_l_rule(m):
                     for t in T:
                         index.append((l,s,O,K,t))
     return index
-
 model.x_l_rule = pyo.Set(dimen=5, initialize=x_l_rule)
 model.x_l_srkt = pyo.Var(model.x_l_rule,
                          within=pyo.Binary
