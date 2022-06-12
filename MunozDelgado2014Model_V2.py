@@ -75,8 +75,9 @@ def l_sr_rule(model, s, r):
     return l__sr[s-1,r-1]
 model.l__sr = pyo.Param(model.Omega_N, model.Omega_N, initialize=l_sr_rule) #Feeder length.
 model.pf = pyo.Param(initialize=pf, domain=Reals) #System power factor.
-
-
+def Gup_p_k_rule(model, p, k):
+    return Gup_p_k[p][k-1]
+model.Gup_p_k = pyo.Param(model.P, model.K_p, initialize=Gup_p_k_rule) #Rated capacities of generators
 # =============================================================================
 # Variables
 # =============================================================================
