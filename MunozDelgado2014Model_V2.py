@@ -34,7 +34,7 @@ model = pyo.ConcreteModel()
 
 model.T = pyo.Set(initialize=T) #Set of time stages.
 model.L = pyo.Set(initialize=L) #Set of feeder types.
-model.L_l = pyo.Set(initialize=['NRF','NAF']) #Set of feeder types.
+model.L_nl = pyo.Set(initialize=['NRF','NAF']) #Set of feeder types.
 model.P = pyo.Set(initialize=P) #Set of Generator Types
 model.TR = pyo.Set(initialize=TR) #Set of Transformers Types
 def K_p_rule(model, p):
@@ -54,6 +54,9 @@ model.Omega_l_s = pyo.Set(model.L, model.Omega_N, initialize=Omega_l_s_rule) #Se
 def Omega_p_rule(model, p):
     return Omega_p[p]
 model.Omega_p = pyo.Set(model.P, initialize=Omega_p_rule) #Sets of possible nodes to install DGs by type
+def Upsilon_l_rule(model,l):
+    return Upsilon_l[l]
+model.Upsilon_l = pyo.Set(model.L, initialize=Upsilon_l_rule) #Set of branches with feeders of type l.
 
 # =============================================================================
 # Parameters
@@ -74,7 +77,7 @@ def RR_p_rule(model, p):
 model.RR_p = pyo.Param(model.P, initialize=RR_p_rule, domain=Reals) #Capital recovery rates for investment in generators.
 def C_Il_k_rule(model, typ, l):
     return C_Il_k[typ][l-1]
-model.C_Il_k = pyo.Param(model.L_l, model.K_l['NRF'] | model.K_l['NAF'], initialize=C_Il_k_rule) #Investment cost coefficients of feeders.           
+model.C_Il_k = pyo.Param(model.L_nl, model.K_l['NRF'] | model.K_l['NAF'], initialize=C_Il_k_rule) #Investment cost coefficients of feeders.           
 def C_ISS_s_rule(model, ss):
     return C_ISS_s[ss] 
 model.C_ISS_s = pyo.Param(model.Omega_SS, initialize=C_ISS_s_rule) #Investment cost coefficients of substations.
@@ -122,7 +125,7 @@ model.C_TPV = pyo.Var(bounds=(0.0,None)
 
 def x_l_rule(m): 
     index = []
-    for l in model.L_l:
+    for l in model.L_nl:
         for s in model.Omega_N:
             for r in model.Omega_l_s[l,s]:
                 for k in model.K_l[l]:
@@ -191,28 +194,26 @@ def C_TPV_rule(model):
                            ) 
 model.eq1 = pyo.Constraint(rule=C_TPV_rule)
 
-# =============================================================================
-# def eq2_rule(model,t):
-#     return model.C_I_t[t] == (sum(RR_l[l]*sum(sum(C_Il_k[l][k-1]*l__sr[s-1,r-1]*model.x_l_srkt[l,s,r,k,t] 
-#                                             for s,r in Upsilon_l[l])
-#                                         for k in K_l[l])
-#                             for l in ["NRF", "NAF"])
-#                             
-#                             + RR_SS*sum(C_ISS_s[s]*model.x_SS_st[s,t] 
-#                                         for s in Omega_SS) 
-#                               
-#                             + RR_NT*sum(sum(C_INT_k[k-1]*model.x_NT_skt[s,k,t]
-#                                     for s in Omega_SS)
-#                                 for k in K_tr["NT"]) 
-#                             
-#                             + sum(RR_p[p]*sum(sum(C_Ip_k[p][k-1]*pf*Gup_p_k[p][k-1]*model.x_p_skt[p,s,k,t]
-#                                         for s in Omega_p[p])
-#                                     for k in K_p[p])
-#                                 for p in P)                              
-#                             )  
-# 
-# 
-# =============================================================================
+def eq2_rule(model,t):
+    return model.C_I_t[t] == (sum(model.RR_l[l]*sum(sum(model.C_Il_k[l,k]*model.l__sr[s,r]*model.x_l_srkt[l,s,r,k,t] 
+                                            for s,r in model.Upsilon_l[l])
+                                        for k in model.K_l[l])
+                            for l in model.L_nl)
+                            
+                            + model.RR_SS*sum(model.C_ISS_s[s]*model.x_SS_st[s,t] 
+                                        for s in model.Omega_SS) 
+                              
+                            + model.RR_NT*sum(sum(model.C_INT_k[k]*model.x_NT_skt[s,k,t]
+                                    for s in model.Omega_SS)
+                                for k in model.K_tr['NT']) 
+                            
+                            + sum(model.RR_p[p]*sum(sum(model.C_Ip_k[p,k]*model.pf*model.Gup_p_k[p,k]*model.x_p_skt[p,s,k,t]
+                                        for s in model.Omega_p[p])
+                                    for k in model.K_p[p])
+                                for p in model.P)                              
+                            )  
+model.eq2 = pyo.Constraint(model.T, rule=eq2_rule)
+
 
 
 
