@@ -225,6 +225,19 @@ model.y_l_srkt = pyo.Var(model.y_l_rule,
                          within=pyo.Binary
     )
 
+def y_tr_rule(m):
+    index = []
+    for tr in model.TR:
+        for s in model.Omega_N:
+            for k in model.K_tr[tr]:
+                for t in model.T:
+                    index.append((tr,s,k,t))
+    return index 
+
+model.y_tr_rule = pyo.Set(dimen=4, initialize=y_tr_rule)
+model.y_tr_skt = pyo.Var(model.y_tr_rule,
+                         within=pyo.Binary
+    )
 # =============================================================================
 # Objective Function
 # =============================================================================
