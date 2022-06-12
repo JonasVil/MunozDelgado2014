@@ -213,12 +213,12 @@ model.x_NT_skt = pyo.Var(model.x_NT_rule,
                          within=pyo.Binary
     ) #Binary investment variables for new transformers.
 
-def x_p_rule(m):
+def x_p_rule(model):
     index = []
     for p in model.P:
         for s in model.Omega_p[p]:
             for k in model.K_p[p]:
-                for t in T:
+                for t in model.T:
                     index.append((p,s,k,t))
     return index 
 
@@ -227,7 +227,7 @@ model.x_p_skt = pyo.Var(model.x_p_rule,
                         within=pyo.Binary
     ) #Binary investment variables for generators.
 
-def y_l_rule(m):
+def y_l_rule(model):
     index = []
     for l in model.L:
         for s in model.Omega_N:
@@ -242,7 +242,7 @@ model.y_l_srkt = pyo.Var(model.y_l_rule,
                          within=pyo.Binary
     )
 
-def y_tr_rule(m):
+def y_tr_rule(model):
     index = []
     for tr in model.TR:
         for s in model.Omega_N:
@@ -256,7 +256,7 @@ model.y_tr_skt = pyo.Var(model.y_tr_rule,
                          within=pyo.Binary
     )
 
-def y_p_rule(m):
+def y_p_rule(model):
     index = []
     for p in model.P:
         for s in model.Omega_N:
@@ -270,6 +270,20 @@ model.y_p_skt = pyo.Var(model.y_p_rule,
                         within=pyo.Binary
     )
 
+def g_tr_rule(model):
+    index = []
+    for tr in model.TR:
+        for s in model.Omega_N:
+            for k in model.K_tr[tr]:
+                for t in model.T:
+                    for b in model.B:
+                        index.append((tr,s,k,t,b))
+    return index
+
+model.g_tr_rule = pyo.Set(dimen=5, initialize=g_tr_rule)
+model.g_tr_sktb = pyo.Var(model.g_tr_rule,
+                         bounds=(0.0,None)                        
+    )
 
 # =============================================================================
 # Objective Function
@@ -329,7 +343,22 @@ def eq3_rule(model,t):
         )
 model.eq3 = pyo.Constraint(model.T, rule=eq3_rule)
 
-
+# =============================================================================
+# def eq4_rule(model,t):
+#     return model.C_E_t[t] == (sum(model.Delta__b[b]*model.pf*(sum(sum(sum(model.C_SS_b[s,b]*model.g_tr_sktb[tr,s,k,t,b]
+#                                 for s in Omega_SS)
+#                             for k in K_tr[tr])
+#                         for tr in TR)
+#                         
+#                         + sum(sum(sum(C_Ep_k[p][k-1]*model.g_p_sktb[p,s,k,t,b]
+#                                 for s in Omega_p[p])
+#                             for k in K_p[p])
+#                         for p in P)
+#                         )
+#                 for b in B)
+#             )
+# model.eq4 = pyo.Constraint(T, rule=eq4_rule)
+# =============================================================================
 
 
 
