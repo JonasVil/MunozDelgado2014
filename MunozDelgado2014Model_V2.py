@@ -32,7 +32,6 @@ model = pyo.ConcreteModel()
 # Sets
 # =============================================================================
 
-
 model.T = pyo.Set(initialize=T) #Set of time stages.
 model.L = pyo.Set(initialize=L) #Set of feeder types.
 model.L_l = pyo.Set(initialize=['NRF','NAF']) #Set of feeder types.
@@ -42,6 +41,8 @@ model.K_l = pyo.Set(initialize=[1,2]) #Set of lines options
 model.K_nt = pyo.Set(initialize=[1,2]) #Set of new transformers options
 model.Omega_SS = pyo.Set(initialize=Omega_SS) #Set of substation nodes
 model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
+
+
 # =============================================================================
 # Parameters
 # =============================================================================
@@ -78,6 +79,8 @@ model.pf = pyo.Param(initialize=pf, domain=Reals) #System power factor.
 def Gup_p_k_rule(model, p, k):
     return Gup_p_k[p][k-1]
 model.Gup_p_k = pyo.Param(model.P, model.K_p, initialize=Gup_p_k_rule) #Rated capacities of generators
+
+
 # =============================================================================
 # Variables
 # =============================================================================
