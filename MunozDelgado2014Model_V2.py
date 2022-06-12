@@ -161,7 +161,7 @@ def x_p_rule(m):
     index = []
     for p in model.P:
         for s in model.Omega_p[p]:
-            for k in K_p[p]:
+            for k in model.K_p[p]:
                 for t in T:
                     index.append((p,s,k,t))
     return index 
