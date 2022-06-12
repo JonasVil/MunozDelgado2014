@@ -169,7 +169,8 @@ def x_p_rule(m):
 model.x_p_rule = pyo.Set(dimen=4, initialize=x_p_rule)
 model.x_p_skt = pyo.Var(model.x_p_rule,
                         within=pyo.Binary
-    )
+    ) #Binary investment variables for generators.
+
 
 # =============================================================================
 # Objective Function
