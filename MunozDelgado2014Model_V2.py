@@ -252,6 +252,8 @@ model.y_p_rule = pyo.Set(dimen=4, initialize=y_p_rule)
 model.y_p_skt = pyo.Var(model.y_p_rule,
                         within=pyo.Binary
     )
+
+
 # =============================================================================
 # Objective Function
 # =============================================================================
@@ -291,19 +293,26 @@ def eq2_rule(model,t):
                             )  
 model.eq2 = pyo.Constraint(model.T, rule=eq2_rule)
 
+def eq3_rule(model,t):
+    return model.C_M_t[t] == (sum(sum(sum(model.C_Ml_k[l,k]*(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t])
+                    for s,r in model.Upsilon_l[l])
+                for k in model.K_l[l])
+            for l in model.L)
+            
+            + sum(sum(sum(model.C_Mtr_k[tr,k]*model.y_tr_skt[tr,s,k,t]
+                    for s in model.Omega_SS)
+                for k in model.K_tr[tr])
+            for tr in model.TR)
+            
+            + sum(sum(sum(model.C_Mp_k[p,k]*model.y_p_skt[p,s,k,t]
+                    for s in model.Omega_p[p])
+                for k in model.K_p[p])
+            for p in model.P)
+        
+        )
+model.eq3 = pyo.Constraint(model.T, rule=eq3_rule)
 
 
-
-# =============================================================================
-# 
-# model.A = Set(initialize=['Scones', 'Tea'])
-# lb = {'Scones':2, 'Tea':4}
-# ub = {'Scones':5, 'Tea':7}
-# def fb(model, i):
-#    return (lb[i], ub[i])
-# model.PriceToCharge = Var(model.A, domain=PositiveIntegers, bounds=fb)
-# 
-# =============================================================================
 
 
 
