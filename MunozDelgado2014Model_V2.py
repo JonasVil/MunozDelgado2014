@@ -33,6 +33,7 @@ model = pyo.ConcreteModel()
 # =============================================================================
 
 model.T = pyo.Set(initialize=T) #Set of time stages.
+model.B = pyo.Set(initialize=B) #Set of load levels.
 model.L = pyo.Set(initialize=L) #Set of feeder types.
 model.L_nl = pyo.Set(initialize=['NRF','NAF']) #Set of feeder types.
 model.P = pyo.Set(initialize=P) #Set of Generator Types
