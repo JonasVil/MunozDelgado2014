@@ -55,25 +55,25 @@ def RR_l_rule(model, l):
     return index
 model.RR_l = pyo.Param(model.L, initialize=RR_l_rule, domain=Reals) #Capital recovery rates for investment in feeders.   
 model.RR_SS = pyo.Param(initialize=RR_SS, domain=Reals) #Capital recovery rates for investment in substations.
-model.RR_NT = pyo.Param(initialize=RR_NT, domain=Reals) #Capital recovery rates for investment in new transformers
+model.RR_NT = pyo.Param(initialize=RR_NT, domain=Reals) #Capital recovery rates for investment in new transformers.
 def RR_p_rule(model, p):
     return RR_p[p]
-model.RR_p = pyo.Param(model.P, initialize=RR_p_rule, domain=Reals) #Capital recovery rates for investment in generators
+model.RR_p = pyo.Param(model.P, initialize=RR_p_rule, domain=Reals) #Capital recovery rates for investment in generators.
 def C_Il_k_rule(model, typ, l):
     return C_Il_k[typ][l-1]
-model.C_Il_k = pyo.Param(model.L_l, model.K_l, initialize=C_Il_k_rule) #Investment cost coefficients of feeders           
+model.C_Il_k = pyo.Param(model.L_l, model.K_l, initialize=C_Il_k_rule) #Investment cost coefficients of feeders.           
 def C_ISS_s_rule(model, ss):
     return C_ISS_s[ss] 
-model.C_ISS_s = pyo.Param(model.Omega_SS, initialize=C_ISS_s_rule) #Investment cost coefficients of substations
+model.C_ISS_s = pyo.Param(model.Omega_SS, initialize=C_ISS_s_rule) #Investment cost coefficients of substations.
 def C_INT_k_rule(model, nt):
     return C_INT_k[nt-1]
-model.C_INT_k = pyo.Param(model.K_nt, initialize=C_INT_k_rule) #Investment cost coefficients of new transformers
+model.C_INT_k = pyo.Param(model.K_nt, initialize=C_INT_k_rule) #Investment cost coefficients of new transformers.
 def C_Ip_k_rule(model, p, k):
     return C_Ip_k[p][k-1]
-model.C_Ip_k = pyo.Param(model.P, model.K_p, initialize=C_Ip_k_rule) #Investment cost coefficients of generators
+model.C_Ip_k = pyo.Param(model.P, model.K_p, initialize=C_Ip_k_rule) #Investment cost coefficients of generators.
 def l_sr_rule(model, s, r):
-    return 
-   
+    return l__sr[s-1,r-1]
+model.l__sr = pyo.Param(model.Omega_N, model.Omega_N, initialize=l_sr_rule) #Feeder length.
 # =============================================================================
 # Variables
 # =============================================================================
