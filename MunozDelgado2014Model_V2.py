@@ -40,8 +40,8 @@ model.P = pyo.Set(initialize=P) #Set of Generator Types
 model.K_p = pyo.Set(initialize=[1,2]) #Set of DG options
 model.K_l = pyo.Set(initialize=[1,2]) #Set of lines options
 model.K_nt = pyo.Set(initialize=[1,2]) #Set of new transformers options
-model.Omega_SS = pyo.Set(initialize=Omega_SS) #Sets of substation nodes
-
+model.Omega_SS = pyo.Set(initialize=Omega_SS) #Set of substation nodes
+model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
 # =============================================================================
 # Parameters
 # =============================================================================
@@ -68,7 +68,11 @@ model.C_ISS_s = pyo.Param(model.Omega_SS, initialize=C_ISS_s_rule) #Investment c
 def C_INT_k_rule(model, nt):
     return C_INT_k[nt-1]
 model.C_INT_k = pyo.Param(model.K_nt, initialize=C_INT_k_rule) #Investment cost coefficients of new transformers
-
+def C_Ip_k_rule(model, p, k):
+    return C_Ip_k[p][k-1]
+model.C_Ip_k = pyo.Param(model.P, model.K_p, initialize=C_Ip_k_rule) #Investment cost coefficients of generators
+def l_sr_rule(model, s, r):
+    return 
    
 # =============================================================================
 # Variables
