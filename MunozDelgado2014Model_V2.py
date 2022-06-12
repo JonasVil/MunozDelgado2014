@@ -112,7 +112,7 @@ model.C_U_t = pyo.Var(model.T,
 model.C_TPV = pyo.Var(bounds=(0.0,None)
                       )
 
-def x_l_rule(m):
+def x_l_rule(m): 
     index = []
     for l in model.L_l:
         for s in model.Omega_N:
@@ -124,7 +124,7 @@ def x_l_rule(m):
 model.x_l_rule = pyo.Set(dimen=5, initialize=x_l_rule)
 model.x_l_srkt = pyo.Var(model.x_l_rule,
                          within=pyo.Binary
-    )
+    ) #Binary investment variables for feeders
 
 
 
