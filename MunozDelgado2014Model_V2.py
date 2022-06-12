@@ -142,7 +142,12 @@ def C_Ep_k_rule(model, p, k):
 model.C_Ep_k = pyo.Param(model.P, model.K_p['C'], initialize=C_Ep_k_rule) #the costs of the energy supplied by DG units.
 #DG units
 
-model.C_U = pyo.Param(initialize=C_U) #Cost for unserved energy 
+model.C_U = pyo.Param(initialize=C_U) #Cost for unserved energy.
+
+def Delta__b_rule(model, b):
+    return Delta__b[b-1]
+model.Delta__b = pyo.Param(model.B, initialize=Delta__b_rule) #Duration of load level b.
+
 
 # =============================================================================
 # Variables
