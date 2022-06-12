@@ -74,7 +74,7 @@ def C_ISS_s_rule(model, ss):
 model.C_ISS_s = pyo.Param(model.Omega_SS, initialize=C_ISS_s_rule) #Investment cost coefficients of substations.
 def C_INT_k_rule(model, nt):
     return C_INT_k[nt-1]
-model.C_INT_k = pyo.Param(model.K_nt, initialize=C_INT_k_rule) #Investment cost coefficients of new transformers.
+model.C_INT_k = pyo.Param(model.K_tr['NT'], initialize=C_INT_k_rule) #Investment cost coefficients of new transformers.
 def C_Ip_k_rule(model, p, k):
     return C_Ip_k[p][k-1]
 model.C_Ip_k = pyo.Param(model.P, model.K_p, initialize=C_Ip_k_rule) #Investment cost coefficients of generators.
@@ -142,15 +142,14 @@ model.x_SS_st = pyo.Var(model.x_SS_rule,
 def x_NT_rule(model):
     index = []
     for s in model.Omega_SS:
-        for k in K_tr["NT"]:
-            for t in T:
-                index.append((SS,k,t))
+        for k in model.K_tr['NT']:
+            for t in model.T:
+                index.append((s,k,t))
     return index
-
 model.x_NT_rule = pyo.Set(dimen=3, initialize=x_NT_rule)
 model.x_NT_skt = pyo.Var(model.x_NT_rule, 
                          within=pyo.Binary
-    )
+    )#Binary investment variables for new transformers.
 
 # =============================================================================
 # Objective Function
