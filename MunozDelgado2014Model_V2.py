@@ -124,7 +124,7 @@ def x_l_rule(m):
 model.x_l_rule = pyo.Set(dimen=5, initialize=x_l_rule)
 model.x_l_srkt = pyo.Var(model.x_l_rule,
                          within=pyo.Binary
-    ) #Binary investment variables for feeders
+    ) #Binary investment variables for feeders.
 
 def x_SS_rule(model):
     index = []
@@ -135,7 +135,7 @@ def x_SS_rule(model):
 model.x_SS_rule = pyo.Set(dimen=2, initialize=x_SS_rule)
 model.x_SS_st = pyo.Var(model.x_SS_rule,
                         within=pyo.Binary
-                        )
+                        ) #Binary investment variables for substations.
 
 # =============================================================================
 # Objective Function
