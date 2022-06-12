@@ -37,23 +37,29 @@ model.L = pyo.Set(initialize=L) #Set of feeder types.
 model.L_nl = pyo.Set(initialize=['NRF','NAF']) #Set of feeder types.
 model.P = pyo.Set(initialize=P) #Set of Generator Types
 model.TR = pyo.Set(initialize=TR) #Set of Transformers Types
+
 def K_p_rule(model, p):
     return K_p[p]
 model.K_p = pyo.Set(model.P, initialize=K_p_rule) #Set of DG options
+
 def K_l_rule(model, l):
     return K_l[l]
 model.K_l = pyo.Set(model.L, initialize=K_l_rule) #Set of lines options by type
+
 def K_tr_rule(model, tr):
     return K_tr[tr]
 model.K_tr = pyo.Set(model.TR, initialize=K_tr_rule) #Set of new transformers options
 model.Omega_SS = pyo.Set(initialize=Omega_SS) #Set of substation nodes
 model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
+
 def Omega_l_s_rule(model, l, s):
     return Omega_l_s[l][s-1]
 model.Omega_l_s = pyo.Set(model.L, model.Omega_N, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
+
 def Omega_p_rule(model, p):
     return Omega_p[p]
 model.Omega_p = pyo.Set(model.P, initialize=Omega_p_rule) #Sets of possible nodes to install DGs by type
+
 def Upsilon_l_rule(model,l):
     return Upsilon_l[l]
 model.Upsilon_l = pyo.Set(model.L, initialize=Upsilon_l_rule) #Set of branches with feeders of type l.
@@ -63,6 +69,7 @@ model.Upsilon_l = pyo.Set(model.L, initialize=Upsilon_l_rule) #Set of branches w
 # =============================================================================
 
 model.i = pyo.Param(initialize=i, domain=Reals) #Annual interest rate.
+
 def RR_l_rule(model, l):
     if l in ['NRF','NAF']:
         index = RR_l[l]
@@ -70,31 +77,57 @@ def RR_l_rule(model, l):
         index = 0
     return index
 model.RR_l = pyo.Param(model.L, initialize=RR_l_rule, domain=Reals) #Capital recovery rates for investment in feeders.   
+
 model.RR_SS = pyo.Param(initialize=RR_SS, domain=Reals) #Capital recovery rates for investment in substations.
+
 model.RR_NT = pyo.Param(initialize=RR_NT, domain=Reals) #Capital recovery rates for investment in new transformers.
+
 def RR_p_rule(model, p):
     return RR_p[p]
 model.RR_p = pyo.Param(model.P, initialize=RR_p_rule, domain=Reals) #Capital recovery rates for investment in generators.
+
 def C_Il_k_rule(model, typ, l):
     return C_Il_k[typ][l-1]
 model.C_Il_k = pyo.Param(model.L_nl, model.K_l['NRF'] | model.K_l['NAF'], initialize=C_Il_k_rule) #Investment cost coefficients of feeders.           
+
 def C_ISS_s_rule(model, ss):
     return C_ISS_s[ss] 
 model.C_ISS_s = pyo.Param(model.Omega_SS, initialize=C_ISS_s_rule) #Investment cost coefficients of substations.
+
 def C_INT_k_rule(model, nt):
     return C_INT_k[nt-1]
 model.C_INT_k = pyo.Param(model.K_tr['NT'], initialize=C_INT_k_rule) #Investment cost coefficients of new transformers.
+
 def C_Ip_k_rule(model, p, k):
     return C_Ip_k[p][k-1]
 model.C_Ip_k = pyo.Param(model.P, model.K_p['C'] | model.K_p['W'], initialize=C_Ip_k_rule) #Investment cost coefficients of generators.
+
 def l_sr_rule(model, s, r):
     return l__sr[s-1,r-1]
 model.l__sr = pyo.Param(model.Omega_N, model.Omega_N, initialize=l_sr_rule) #Feeder length.
+
 model.pf = pyo.Param(initialize=pf, domain=Reals) #System power factor.
+
 def Gup_p_k_rule(model, p, k):
     return Gup_p_k[p][k-1]
 model.Gup_p_k = pyo.Param(model.P, model.K_p['C'] | model.K_p['W'], initialize=Gup_p_k_rule) #Rated capacities of generators
 
+def C_Ml_k_rule(model):
+    index = {}
+    for l in model.L:
+        for k in model.K_l[l]:
+            index[l,k] = C_Ml_k[l][k-1]
+    return index
+model.C_Ml_k = pyo.Param(model.L, model.K_l['NAF'], initialize=C_Ml_k_rule) #Maintenance cost coefficients of feeders
+
+
+C_Mp_k = {"C": [0.05*0.9*500000*1, 0.05*0.9*490000*2], #Maintenance cost coefficients of generators
+          "W": [0.05*0.9*1850000*0.91, 0.05*0.9*1840000*2.05]
+          }
+
+C_Mtr_k = {"ET": [1000], #Maintenance cost coefficients of transformers
+           "NT": [2000, 3000]
+           }
 
 # =============================================================================
 # Variables
@@ -227,10 +260,6 @@ model.eq2 = pyo.Constraint(model.T, rule=eq2_rule)
 # model.PriceToCharge = Var(model.A, domain=PositiveIntegers, bounds=fb)
 # 
 # =============================================================================
-
-
-
-
 
 
 
