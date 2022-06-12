@@ -36,13 +36,14 @@ model.T = pyo.Set(initialize=T) #Set of time stages.
 model.L = pyo.Set(initialize=L) #Set of feeder types.
 model.L_l = pyo.Set(initialize=['NRF','NAF']) #Set of feeder types.
 model.P = pyo.Set(initialize=P) #Set of Generator Types
+model.TR = pyo.Set(initialize=TR) #Set of Transformers Types
 model.K_p = pyo.Set(initialize=[1,2]) #Set of DG options
 def K_l_rule(model, l):
     return K_l[l]
 model.K_l = pyo.Set(model.L, initialize=K_l_rule) #Set of lines options by type
-def K_tr_rule(model, nt):
+def K_tr_rule(model, tr):
     return K_tr[tr]
-model.K_tr = pyo.Set(initialize=K_tr_rule) #Set of new transformers options
+model.K_tr = pyo.Set(model.TR, initialize=K_tr_rule) #Set of new transformers options
 model.Omega_SS = pyo.Set(initialize=Omega_SS) #Set of substation nodes
 model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
 def Omega_l_s_rule(model, l, s):
@@ -149,7 +150,7 @@ def x_NT_rule(model):
 model.x_NT_rule = pyo.Set(dimen=3, initialize=x_NT_rule)
 model.x_NT_skt = pyo.Var(model.x_NT_rule, 
                          within=pyo.Binary
-    )#Binary investment variables for new transformers.
+    ) #Binary investment variables for new transformers.
 
 # =============================================================================
 # Objective Function
