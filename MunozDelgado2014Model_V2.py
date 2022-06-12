@@ -74,6 +74,9 @@ model.C_Ip_k = pyo.Param(model.P, model.K_p, initialize=C_Ip_k_rule) #Investment
 def l_sr_rule(model, s, r):
     return l__sr[s-1,r-1]
 model.l__sr = pyo.Param(model.Omega_N, model.Omega_N, initialize=l_sr_rule) #Feeder length.
+model.pf = pyo.Param(initialize=pf, domain=Reals) #System power factor.
+
+
 # =============================================================================
 # Variables
 # =============================================================================
