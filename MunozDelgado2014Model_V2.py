@@ -40,7 +40,9 @@ model.K_p = pyo.Set(initialize=[1,2]) #Set of DG options
 def K_l_rule(model, l):
     return K_l[l]
 model.K_l = pyo.Set(model.L, initialize=K_l_rule) #Set of lines options by type
-model.K_nt = pyo.Set(initialize=[1,2]) #Set of new transformers options
+def K_tr_rule(model, nt):
+    return K_tr[tr]
+model.K_tr = pyo.Set(initialize=K_tr_rule) #Set of new transformers options
 model.Omega_SS = pyo.Set(initialize=Omega_SS) #Set of substation nodes
 model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
 def Omega_l_s_rule(model, l, s):
@@ -136,6 +138,19 @@ model.x_SS_rule = pyo.Set(dimen=2, initialize=x_SS_rule)
 model.x_SS_st = pyo.Var(model.x_SS_rule,
                         within=pyo.Binary
                         ) #Binary investment variables for substations.
+
+def x_NT_rule(model):
+    index = []
+    for s in model.Omega_SS:
+        for k in K_tr["NT"]:
+            for t in T:
+                index.append((SS,k,t))
+    return index
+
+model.x_NT_rule = pyo.Set(dimen=3, initialize=x_NT_rule)
+model.x_NT_skt = pyo.Var(model.x_NT_rule, 
+                         within=pyo.Binary
+    )
 
 # =============================================================================
 # Objective Function
