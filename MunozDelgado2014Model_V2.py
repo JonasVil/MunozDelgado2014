@@ -285,6 +285,21 @@ model.g_tr_sktb = pyo.Var(model.g_tr_rule,
                          bounds=(0.0,None)                        
     )
 
+def g_p_rule(model):
+    index = []
+    for p in model.P:
+        for s in model.Omega_N:
+            for k in model.K_p[p]:
+                for t in model.T:
+                    for b in model.B:
+                        index.append((p,s,k,t,b))
+    return index
+
+model.g_p_rule = pyo.Set(dimen=5, initialize=g_p_rule)
+model.g_p_sktb = pyo.Var(model.g_p_rule,
+                         bounds=(0.0,None)                    
+    )
+
 # =============================================================================
 # Objective Function
 # =============================================================================
