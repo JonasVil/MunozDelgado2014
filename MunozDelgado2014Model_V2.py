@@ -120,6 +120,14 @@ def C_Ml_k_rule(model):
     return index
 model.C_Ml_k = pyo.Param(model.L, model.K_l['NAF'], initialize=C_Ml_k_rule) #Maintenance cost coefficients of feeders
 
+def C_Mtr_k_rule(model):
+    index = {}
+    for tr in model.TR:
+        for k in model.K_tr[tr]:
+            index[tr,k] = C_Mtr_k[tr][k-1]
+    return index
+model.C_Mtr_k = pyo.Param(model.TR, model.K_tr['NT'], initialize=C_Mtr_k_rule) #Maintenance cost coefficients of transformers
+
 
 C_Mp_k = {"C": [0.05*0.9*500000*1, 0.05*0.9*490000*2], #Maintenance cost coefficients of generators
           "W": [0.05*0.9*1850000*0.91, 0.05*0.9*1840000*2.05]
