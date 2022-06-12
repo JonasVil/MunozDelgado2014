@@ -343,22 +343,20 @@ def eq3_rule(model,t):
         )
 model.eq3 = pyo.Constraint(model.T, rule=eq3_rule)
 
-# =============================================================================
-# def eq4_rule(model,t):
-#     return model.C_E_t[t] == (sum(model.Delta__b[b]*model.pf*(sum(sum(sum(model.C_SS_b[s,b]*model.g_tr_sktb[tr,s,k,t,b]
-#                                 for s in Omega_SS)
-#                             for k in K_tr[tr])
-#                         for tr in TR)
-#                         
-#                         + sum(sum(sum(C_Ep_k[p][k-1]*model.g_p_sktb[p,s,k,t,b]
-#                                 for s in Omega_p[p])
-#                             for k in K_p[p])
-#                         for p in P)
-#                         )
-#                 for b in B)
-#             )
-# model.eq4 = pyo.Constraint(T, rule=eq4_rule)
-# =============================================================================
+def eq4_rule(model,t):
+    return model.C_E_t[t] == (sum(model.Delta__b[b]*model.pf*(sum(sum(sum(model.C_SS_b[s,b]*model.g_tr_sktb[tr,s,k,t,b]
+                                for s in model.Omega_SS)
+                            for k in model.K_tr[tr])
+                        for tr in model.TR)
+                        
+                        + sum(sum(sum(model.C_Ep_k[p,k]*model.g_p_sktb[p,s,k,t,b]
+                                for s in model.Omega_p[p])
+                            for k in model.K_p[p])
+                        for p in model.P)
+                        )
+                for b in model.B)
+            )
+model.eq4 = pyo.Constraint(model.T, rule=eq4_rule)
 
 
 
