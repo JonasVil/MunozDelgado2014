@@ -133,6 +133,21 @@ def C_Mp_k_rule(model, p, k):
     return C_Mp_k[p][k-1]
 model.C_Mp_k = pyo.Param(model.P, model.K_p['C'] | model.K_p['W'], initialize=C_Mp_k_rule) #Maintenance cost coefficients of generators
 
+def C_SS_b_rule(model, ss, b):
+    return C_SS_b[b-1]
+model.C_SS_b = pyo.Param(model.Omega_SS, model.B, initialize=C_SS_b_rule)
+#Load Levels
+#         1     2   3
+C_SS_b = [57.7, 70, 85.3] #the costs of the energy supplied by all substations
+
+#DG units
+C_Ep_k = {"C": [47, 45], #Conventional DG
+          "W": [0, 0]    #Windy DG
+          }
+
+#Cost for unserved energy 
+C_U = 2000
+
 # =============================================================================
 # Variables
 # =============================================================================
