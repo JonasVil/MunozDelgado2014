@@ -37,7 +37,9 @@ model.L = pyo.Set(initialize=L) #Set of feeder types.
 model.L_l = pyo.Set(initialize=['NRF','NAF']) #Set of feeder types.
 model.P = pyo.Set(initialize=P) #Set of Generator Types
 model.TR = pyo.Set(initialize=TR) #Set of Transformers Types
-model.K_p = pyo.Set(initialize=[1,2]) #Set of DG options
+def K_p_rule(model, p):
+    return K_p[p]
+model.K_p = pyo.Set(model.P, initialize=K_p_rule) #Set of DG options
 def K_l_rule(model, l):
     return K_l[l]
 model.K_l = pyo.Set(model.L, initialize=K_l_rule) #Set of lines options by type
@@ -81,14 +83,14 @@ def C_INT_k_rule(model, nt):
 model.C_INT_k = pyo.Param(model.K_tr['NT'], initialize=C_INT_k_rule) #Investment cost coefficients of new transformers.
 def C_Ip_k_rule(model, p, k):
     return C_Ip_k[p][k-1]
-model.C_Ip_k = pyo.Param(model.P, model.K_p, initialize=C_Ip_k_rule) #Investment cost coefficients of generators.
+model.C_Ip_k = pyo.Param(model.P, model.K_p['C'] | model.K_p['W'], initialize=C_Ip_k_rule) #Investment cost coefficients of generators.
 def l_sr_rule(model, s, r):
     return l__sr[s-1,r-1]
 model.l__sr = pyo.Param(model.Omega_N, model.Omega_N, initialize=l_sr_rule) #Feeder length.
 model.pf = pyo.Param(initialize=pf, domain=Reals) #System power factor.
 def Gup_p_k_rule(model, p, k):
     return Gup_p_k[p][k-1]
-model.Gup_p_k = pyo.Param(model.P, model.K_p, initialize=Gup_p_k_rule) #Rated capacities of generators
+model.Gup_p_k = pyo.Param(model.P, model.K_p['C'] | model.K_p['W'], initialize=Gup_p_k_rule) #Rated capacities of generators
 
 
 # =============================================================================
@@ -158,10 +160,10 @@ model.x_NT_skt = pyo.Var(model.x_NT_rule,
 def x_p_rule(m):
     index = []
     for p in model.P:
-        for O in Omega_p[p]:
-            for K in K_p[p]:
+        for s in model.Omega_p[p]:
+            for k in K_p[p]:
                 for t in T:
-                    index.append((p,O,K,t))
+                    index.append((p,s,k,t))
     return index 
 
 model.x_p_rule = pyo.Set(dimen=4, initialize=x_p_rule)
