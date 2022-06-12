@@ -128,14 +128,9 @@ def C_Mtr_k_rule(model):
     return index
 model.C_Mtr_k = pyo.Param(model.TR, model.K_tr['NT'], initialize=C_Mtr_k_rule) #Maintenance cost coefficients of transformers
 
-
-C_Mp_k = {"C": [0.05*0.9*500000*1, 0.05*0.9*490000*2], #Maintenance cost coefficients of generators
-          "W": [0.05*0.9*1850000*0.91, 0.05*0.9*1840000*2.05]
-          }
-
-C_Mtr_k = {"ET": [1000], #Maintenance cost coefficients of transformers
-           "NT": [2000, 3000]
-           }
+def C_Mp_k_rule(model, p, k):
+    return C_Mp_k[p][k-1]
+model.C_Mp_k = pyo.Param(model.P, model.K_p['C'] | model.K_p['W'], initialize=C_Mp_k_rule) #Maintenance cost coefficients of generators
 
 # =============================================================================
 # Variables
@@ -215,6 +210,20 @@ model.x_p_skt = pyo.Var(model.x_p_rule,
                         within=pyo.Binary
     ) #Binary investment variables for generators.
 
+def y_l_rule(m):
+    index = []
+    for l in model.L:
+        for s in model.Omega_N:
+            for r in model.Omega_l_s[l,s]:
+                for k in model.K_l[l]:
+                    for t in model.T:
+                        index.append((l,s,r,k,t))
+    return index 
+
+model.y_l_rule = pyo.Set(dimen=5, initialize=y_l_rule)
+model.y_l_srkt = pyo.Var(model.y_l_rule,
+                         within=pyo.Binary
+    )
 
 # =============================================================================
 # Objective Function
