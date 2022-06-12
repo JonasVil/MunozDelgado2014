@@ -41,8 +41,15 @@ model.K_l = pyo.Set(initialize=[1,2]) #Set of lines options
 model.K_nt = pyo.Set(initialize=[1,2]) #Set of new transformers options
 model.Omega_SS = pyo.Set(initialize=Omega_SS) #Set of substation nodes
 model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
+def Omega_l_s_rule(model, l, s):
+    return Omega_l_s[l][s-1]
+model.Omega_l_s = pyo.Set(model.L, model.Omega_N, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
 
-
+Omega_l_s = {"EFF": [[] for i in range(0,n_bus)], #Sets of nodes connected to node s by a feeder of type l
+             "ERF": [[] for i in range(0,n_bus)],
+             "NRF": [[] for i in range(0,n_bus)],
+             "NAF": [[] for i in range(0,n_bus)]
+             }
 # =============================================================================
 # Parameters
 # =============================================================================
@@ -107,6 +114,20 @@ model.C_U_t = pyo.Var(model.T,
 
 model.C_TPV = pyo.Var(bounds=(0.0,None)
                       )
+
+def x_l_rule(m):
+    index = []
+    for l in model.L_l:
+        for s in model.Omega_N:
+            for O in Omega_l_s[l][s-1]:
+                for K in K_l[l]:
+                    for t in T:
+                        index.append((l,s,O,K,t))
+    return index
+model.x_l_rule = pyo.Set(dimen=5, initialize=x_l_rule)
+model.x_l_srkt = pyo.Var(model.x_l_rule,
+                         within=pyo.Binary
+    )
 
 
 
