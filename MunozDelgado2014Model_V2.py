@@ -49,6 +49,9 @@ model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
 def Omega_l_s_rule(model, l, s):
     return Omega_l_s[l][s-1]
 model.Omega_l_s = pyo.Set(model.L, model.Omega_N, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
+def Omega_p_rule(model, p):
+    return Omega_p[p]
+model.Omega_p = pyo.Set(model.P, initialize=Omega_p_rule) #Sets of possible nodes to install DGs by type
 
 # =============================================================================
 # Parameters
@@ -151,6 +154,20 @@ model.x_NT_rule = pyo.Set(dimen=3, initialize=x_NT_rule)
 model.x_NT_skt = pyo.Var(model.x_NT_rule, 
                          within=pyo.Binary
     ) #Binary investment variables for new transformers.
+
+def x_p_rule(m):
+    index = []
+    for p in model.P:
+        for O in Omega_p[p]:
+            for K in K_p[p]:
+                for t in T:
+                    index.append((p,O,K,t))
+    return index 
+
+model.x_p_rule = pyo.Set(dimen=4, initialize=x_p_rule)
+model.x_p_skt = pyo.Var(model.x_p_rule,
+                        within=pyo.Binary
+    )
 
 # =============================================================================
 # Objective Function
