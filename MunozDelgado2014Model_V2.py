@@ -37,7 +37,9 @@ model.L = pyo.Set(initialize=L) #Set of feeder types.
 model.L_l = pyo.Set(initialize=['NRF','NAF']) #Set of feeder types.
 model.P = pyo.Set(initialize=P) #Set of Generator Types
 model.K_p = pyo.Set(initialize=[1,2]) #Set of DG options
-model.K_l = pyo.Set(initialize=[1,2]) #Set of lines options
+def K_l_rule(model, l):
+    return K_l[l]
+model.K_l = pyo.Set(model.L, initialize=K_l_rule) #Set of lines options by type
 model.K_nt = pyo.Set(initialize=[1,2]) #Set of new transformers options
 model.Omega_SS = pyo.Set(initialize=Omega_SS) #Set of substation nodes
 model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
@@ -64,7 +66,7 @@ def RR_p_rule(model, p):
 model.RR_p = pyo.Param(model.P, initialize=RR_p_rule, domain=Reals) #Capital recovery rates for investment in generators.
 def C_Il_k_rule(model, typ, l):
     return C_Il_k[typ][l-1]
-model.C_Il_k = pyo.Param(model.L_l, model.K_l, initialize=C_Il_k_rule) #Investment cost coefficients of feeders.           
+model.C_Il_k = pyo.Param(model.L_l, model.K_l['NRF'] | model.K_l['NAF'], initialize=C_Il_k_rule) #Investment cost coefficients of feeders.           
 def C_ISS_s_rule(model, ss):
     return C_ISS_s[ss] 
 model.C_ISS_s = pyo.Param(model.Omega_SS, initialize=C_ISS_s_rule) #Investment cost coefficients of substations.
@@ -114,7 +116,7 @@ def x_l_rule(m):
     index = []
     for l in model.L_l:
         for s in model.Omega_N:
-            for O in Omega_l_s[l][s-1]:
+            for O in model.Omega_l_s[l,s]:
                 for K in K_l[l]:
                     for t in T:
                         index.append((l,s,O,K,t))
