@@ -67,6 +67,9 @@ def Upsilon_l_rule(model,l):
     return Upsilon_l[l]
 model.Upsilon_l = pyo.Set(model.L, initialize=Upsilon_l_rule) #Set of branches with feeders of type l.
 
+def Omega_LN_t_rule(model, t):
+    return Omega_LN_t[t]
+model.Omega_LN_t = pyo.Param(model.T, initialize=Omega_LN_t_rule)
 # =============================================================================
 # Parameters
 # =============================================================================
@@ -211,6 +214,12 @@ model.C_U_t = pyo.Var(model.T,
 
 model.C_TPV = pyo.Var(bounds=(0.0,None)
                       )
+
+model.d_U_stb = pyo.Var(model.Omega_N, 
+                        model.T,
+                        model.B,
+                        bounds=(0.0,None)
+                        )
 
 def x_l_rule(m): 
     index = []
@@ -516,6 +525,11 @@ for l in model.L:
                             model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= model.A_l_kV[l,k,v])
 
 
-
+def eq6_rule(model,t):
+    return model.C_U_t[t] == (sum(sum(model.Delta__b[b]*model.C_U*model.pf*model.d_U_stb[s,t,b]
+                for s in model.Omega_LN_t[t])
+            for b in model.B)
+        )
+model.eq6 = pyo.Constraint(model.T, rule=eq6_rule)
 
 
