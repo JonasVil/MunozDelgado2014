@@ -175,7 +175,7 @@ def A_tr_kV_rule(model):
             for v in model.n__V:
                 index[tr,k,v] = A_tr_kV[tr][k-1][v-1]
     return index
-model.A_tr_kV = pyo.Param(model.TR, model.K_tr['NT'], model.n__V, initialize=A_tr_kV_rule)
+model.A_tr_kV = pyo.Param(model.TR, model.K_tr['NT'], model.n__V, initialize=A_tr_kV_rule) #Width of block v of the piecewise linear energy losses for transformers.
 
 # =============================================================================
 # Variables
@@ -361,6 +361,25 @@ model.delta_l_srktbv = pyo.Var(model.delta_l_rule,
                                bounds=(0.0,None)                             
     )
 
+def f_l_rule(m):
+    index = []
+    for l in model.L:
+        for s in model.Omega_N:
+            for r in model.Omega_l_s[l,s]:
+                for k in model.K_l[l]:
+                    for t in model.T:
+                        for b in model.B:
+                            index.append((l,s,r,k,t,b))
+    return index
+            
+model.f_l_rule = pyo.Set(dimen=6, initialize=f_l_rule)
+model.f_l_srktb = pyo.Var(model.f_l_rule,
+                          bounds=(0.0,None)
+    )
+model.ftio_l_srktb = pyo.Var(model.f_l_rule,
+                          bounds=(0.0,None)
+    )
+
 # =============================================================================
 # Objective Function
 # =============================================================================
@@ -471,6 +490,14 @@ for tr in model.TR:
                     for v in model.n__V:
                         model.eq5_aux2.add(model.delta_tr_sktbv[tr,s,k,t,b,v] <= model.A_tr_kV[tr,k,v])
 
+model.eq5_aux3 = pyo.ConstraintList()
+for l in model.L:
+    for r in model.Omega_N:
+        for s in model.Omega_l_s[l,r]:
+            for k in model.K_l[l]:
+                for t in model.T:
+                    for b in model.B:
+                        model.eq5_aux3.add(model.f_l_srktb[l,s,r,k,t,b] == sum(model.delta_l_srktbv[l,s,r,k,t,b,v] for v in model.n__V))
 
 
 
