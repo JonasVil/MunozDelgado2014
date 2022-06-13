@@ -177,6 +177,14 @@ def A_tr_kV_rule(model):
     return index
 model.A_tr_kV = pyo.Param(model.TR, model.K_tr['NT'], model.n__V, initialize=A_tr_kV_rule) #Width of block v of the piecewise linear energy losses for transformers.
 
+def A_l_kV_rule(model):
+    index = {}
+    for l in model.L:
+        for k in model.K_l[l]:
+            for v in model.n__V:
+                index[l,k,v] = A_l_kV[l][k-1][v-1]
+    return index
+model.A_l_kV = pyo.Param(model.L, model.K_l['NAF'],model.n__V, initialize=A_l_kV_rule) #Width of block v of the piecewise linear energy losses for feeders.
 # =============================================================================
 # Variables
 # =============================================================================
@@ -453,8 +461,6 @@ def eq4_rule(model,t):
             )
 model.eq4 = pyo.Constraint(model.T, rule=eq4_rule)
 
-
-
 def eq5_rule(model,t):
     return model.C_R_t[t] == (sum(model.Delta__b[b]*model.C_SS_b[b]*model.pf*(sum(sum(sum(sum(
                                 model.M_tr_kV[tr,k,y]*model.delta_tr_sktbv[tr,s,k,t,b,y]
@@ -499,8 +505,15 @@ for l in model.L:
                     for b in model.B:
                         model.eq5_aux3.add(model.f_l_srktb[l,s,r,k,t,b] == sum(model.delta_l_srktbv[l,s,r,k,t,b,v] for v in model.n__V))
 
-
-
+model.eq5_aux4 = pyo.ConstraintList()
+for l in model.L:
+    for r in model.Omega_N:
+        for s in model.Omega_l_s[l,r]:
+            for k in model.K_l[l]:
+                for t in model.T:
+                    for b in model.B:
+                        for v in model.n__V:
+                            model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= model.A_l_kV[l,k,v])
 
 
 
