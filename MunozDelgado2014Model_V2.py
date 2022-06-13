@@ -167,6 +167,16 @@ def M_l_kV_rule(model):
                 index[l,k,z] = M_l_kV[l][k-1][z-1]
     return index
 model.M_l_kV = pyo.Param(model.L, model.K_l['NAF'], model.n__V, initialize=M_l_kV_rule) #Slope of block v of the piecewise linear energy losses for feeders.
+
+def A_tr_kV_rule(model):
+    index = {}
+    for tr in model.TR:
+        for k in model.K_tr[tr]:
+            for v in model.n__V:
+                index[tr,k,v] = A_tr_kV[tr][k-1][v-1]
+    return index
+model.A_tr_kV = pyo.Param(model.TR, model.K_tr['NT'], model.n__V, initialize=A_tr_kV_rule)
+
 # =============================================================================
 # Variables
 # =============================================================================
@@ -444,9 +454,22 @@ def eq5_rule(model,t):
         )
 model.eq5 = pyo.Constraint(model.T, rule=eq5_rule)
 
+model.eq5_aux1 = pyo.ConstraintList()
+for tr in model.TR:
+    for s in model.Omega_SS:
+        for k in model.K_tr[tr]:
+            for t in model.T:
+                for b in model.B:
+                    model.eq5_aux1.add(model.g_tr_sktb[tr,s,k,t,b] == sum(model.delta_tr_sktbv[tr,s,k,t,b,v] for v in model.n__V))
 
-
-
+model.eq5_aux2 = pyo.ConstraintList()
+for tr in model.TR:
+    for s in model.Omega_SS:
+        for k in model.K_tr[tr]:
+            for t in model.T:
+                for b in model.B:
+                    for v in model.n__V:
+                        model.eq5_aux2.add(model.delta_tr_sktbv[tr,s,k,t,b,v] <= model.A_tr_kV[tr,k,v])
 
 
 
