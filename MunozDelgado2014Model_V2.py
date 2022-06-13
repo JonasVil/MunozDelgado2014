@@ -38,6 +38,8 @@ model.L = pyo.Set(initialize=L) #Set of feeder types.
 model.L_nl = pyo.Set(initialize=['NRF','NAF']) #Set of feeder types.
 model.P = pyo.Set(initialize=P) #Set of Generator Types
 model.TR = pyo.Set(initialize=TR) #Set of Transformers Types
+model.n__V = pyo.Set(initialize=[1, 2, 3]) #Number of blocks of the piecewise linear energy losses.
+
 
 def K_p_rule(model, p):
     return K_p[p]
@@ -133,9 +135,9 @@ def C_Mp_k_rule(model, p, k):
     return C_Mp_k[p][k-1]
 model.C_Mp_k = pyo.Param(model.P, model.K_p['C'] | model.K_p['W'], initialize=C_Mp_k_rule) #Maintenance cost coefficients of generators
 
-def C_SS_b_rule(model, ss, b):
+def C_SS_b_rule(model, b):
     return C_SS_b[b-1]
-model.C_SS_b = pyo.Param(model.Omega_SS, model.B, initialize=C_SS_b_rule) #the costs of the energy supplied by all substations.
+model.C_SS_b = pyo.Param(model.B, initialize=C_SS_b_rule) #the costs of the energy supplied by all substations.
 
 def C_Ep_k_rule(model, p, k):
     return C_Ep_k[p][k-1]
@@ -148,7 +150,23 @@ def Delta__b_rule(model, b):
     return Delta__b[b-1]
 model.Delta__b = pyo.Param(model.B, initialize=Delta__b_rule) #Duration of load level b.
 
+def M_tr_kV_rule(model):
+    index = {}
+    for tr in model.TR:
+        for k in model.K_tr[tr]:
+            for y in model.n__V:
+                index[tr,k,y] = M_tr_kV[tr][k-1][y-1]
+    return index
+model.M_tr_kV = pyo.Param(model.TR, model.K_tr['NT'], model.n__V, initialize=M_tr_kV_rule) #Slope of block v of the piecewise linear energy losses for transformers.
 
+def M_l_kV_rule(model):
+    index = {}
+    for l in model.L:
+        for k in model.K_l[l]:
+            for z in model.n__V:
+                index[l,k,z] = M_l_kV[l][k-1][z-1]
+    return index
+model.M_l_kV = pyo.Param(model.L, model.K_l['NAF'], model.n__V, initialize=M_l_kV_rule) #Slope of block v of the piecewise linear energy losses for feeders.
 # =============================================================================
 # Variables
 # =============================================================================
@@ -300,6 +318,39 @@ model.g_p_sktb = pyo.Var(model.g_p_rule,
                          bounds=(0.0,None)                    
     )
 
+def delta_tr_rule(m):
+    index = []
+    for tr in model.TR:
+        for s in model.Omega_SS:
+            for k in model.K_tr[tr]:
+                for t in model.T:
+                    for b in model.B:
+                        for v in model.n__V:
+                            index.append((tr,s,k,t,b,v))
+    return index 
+
+model.delta_tr_rule = pyo.Set(dimen=6, initialize=delta_tr_rule)
+model.delta_tr_sktbv = pyo.Var(model.delta_tr_rule,
+                               bounds=(0.0,None)
+    )
+
+def delta_l_rule(m):
+    index = []
+    for l in model.L:
+        for s in model.Omega_N:
+            for r in model.Omega_l_s[l,s]:
+                for k in model.K_l[l]:
+                    for t in model.T:
+                        for b in model.B:
+                            for v in model.n__V:
+                                index.append((l,s,r,k,t,b,v))
+    return index 
+
+model.delta_l_rule = pyo.Set(dimen=7, initialize=delta_l_rule)
+model.delta_l_srktbv = pyo.Var(model.delta_l_rule,
+                               bounds=(0.0,None)                             
+    )
+
 # =============================================================================
 # Objective Function
 # =============================================================================
@@ -359,7 +410,7 @@ def eq3_rule(model,t):
 model.eq3 = pyo.Constraint(model.T, rule=eq3_rule)
 
 def eq4_rule(model,t):
-    return model.C_E_t[t] == (sum(model.Delta__b[b]*model.pf*(sum(sum(sum(model.C_SS_b[s,b]*model.g_tr_sktb[tr,s,k,t,b]
+    return model.C_E_t[t] == (sum(model.Delta__b[b]*model.pf*(sum(sum(sum(model.C_SS_b[b]*model.g_tr_sktb[tr,s,k,t,b]
                                 for s in model.Omega_SS)
                             for k in model.K_tr[tr])
                         for tr in model.TR)
@@ -374,6 +425,24 @@ def eq4_rule(model,t):
 model.eq4 = pyo.Constraint(model.T, rule=eq4_rule)
 
 
+
+def eq5_rule(model,t):
+    return model.C_R_t[t] == (sum(model.Delta__b[b]*model.C_SS_b[b]*model.pf*(sum(sum(sum(sum(
+                                model.M_tr_kV[tr,k,y]*model.delta_tr_sktbv[tr,s,k,t,b,y]
+                                for y in model.n__V)
+                            for s in model.Omega_SS)
+                        for k in model.K_tr[tr])
+                    for tr in model.TR)
+
+                    + sum(sum(sum(sum(model.M_l_kV[l,k,z]*model.l__sr[s,r]*(model.delta_l_srktbv[l,s,r,k,t,b,z] + model.delta_l_srktbv[l,r,s,k,t,b,z])
+                                for z in model.n__V)
+                            for s, r in model.Upsilon_l[l])
+                        for k in model.K_l[l])
+                    for l in model.L)
+                )
+            for b in model.B)
+        )
+model.eq5 = pyo.Constraint(model.T, rule=eq5_rule)
 
 
 
