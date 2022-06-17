@@ -194,6 +194,14 @@ model.V_ = pyo.Param(initialize=V_) #Lower bound for nodal voltages
 
 model.Vup = pyo.Param(initialize=Vup) #Upper bound for nodal voltages
 
+def Fup_l_k_rule(model):
+    index = {}
+    for l in model.L:
+        for k in model.K_l[l]:
+            index[l,k] = Fup_l_k[l][k-1]
+    return index
+model.Fup_l_k = pyo.Param(model.L, model.K_l['NAF'], initialize=Fup_l_k_rule) #Upper limit for actual current flows through (MVA)
+
 # =============================================================================
 # Variables
 # =============================================================================
@@ -551,3 +559,13 @@ model.eq6 = pyo.Constraint(model.T, rule=eq6_rule)
 def eq7_rule(model, s, t, b):
     return pyo.inequality(model.V_ ,model.V_stb[s,t,b], model.Vup)
 model.eq7 = pyo.Constraint(model.Omega_N, model.T, model.B, rule=eq7_rule)
+
+model.eq8 = pyo.ConstraintList()
+for l in model.L:
+    for r in model.Omega_N:
+        for s in model.Omega_l_s[l,r]:
+            for k in model.K_l[l]:
+                for t in model.T:
+                    for b in model.B:
+                        model.eq8.add(model.f_l_srktb[l,s,r,k,t,b] <= model.y_l_srkt[l,s,r,k,t]*model.Fup_l_k[l,k])
+                        
