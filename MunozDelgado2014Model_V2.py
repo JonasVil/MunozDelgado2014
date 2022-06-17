@@ -13,7 +13,7 @@ DOI: 10.1109/TPWRS.2014.2364960
 import pyomo.environ as pyo
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
-from Data_24Bus import * 
+from Data_24Bus_V2 import * 
 
 # =============================================================================
 # DG Penetration
@@ -596,7 +596,6 @@ for tr in model.TR:
             for t in model.T:
                 for b in model.B:
                     model.eq9.add(model.g_tr_sktb[tr,s,k,t,b] <= model.y_tr_skt[tr,s,k,t]*model.Gup_tr_k[tr,k])
-
 
 model.eq10 = pyo.ConstraintList()
 for t in model.T:

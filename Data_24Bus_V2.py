@@ -334,7 +334,7 @@ V_ = 0.95*Vbase #Lower bound for nodal voltages
 Vup = 1.05*Vbase #Upper bound for nodal voltages
 V_SS = 1.05*Vbase #Voltage at the substations
 
-l__sr = np.full((np.shape(Omega_N)[0],np.shape(Omega_N)[0]),0,dtype=float) #Feeder length.
+l__sr = np.full((np.concatenate((Omega_N, Omega_SS), axis=None).shape[0],np.concatenate((Omega_N, Omega_SS), axis=None).shape[0]),0,dtype=float) #Feeder length.
 for b in branch:
     s, r = b[0]
     l__sr[s-1,r-1] = b[1]
