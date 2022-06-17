@@ -210,6 +210,18 @@ def Gup_tr_k_rule(model):
     return index
 model.Gup_tr_k = pyo.Param(model.TR, model.K_tr['NT'], initialize=Gup_tr_k_rule) #Upper limit for current injections of transformers.
 
+def Mi__b_rule(model, b):
+    return Mi__b[b-1]
+model.Mi__b = pyo.Param(model.B, initialize=Mi__b_rule) #Loading factor of load level b
+
+def D__st_rule(model):
+    index = {}
+    for s in model.Omega_N:
+        for t in model.T:
+            index[s,t] = D__st[s-1,t-1]
+    return index
+model.D__st = pyo.Param(model.Omega_N, model.T, initialize=D__st_rule) #Actual nodal peak demand
+
 # =============================================================================
 # Variables
 # =============================================================================
@@ -586,7 +598,11 @@ for tr in model.TR:
                     model.eq9.add(model.g_tr_sktb[tr,s,k,t,b] <= model.y_tr_skt[tr,s,k,t]*model.Gup_tr_k[tr,k])
 
 
-
+model.eq10 = pyo.ConstraintList()
+for t in model.T:
+    for s in model.Omega_N:
+        for b in model.B:
+            model.eq10.add(model.d_U_stb[s,t,b] <= model.Mi__b[b]*model.D__st[s,t])
 
 
 
