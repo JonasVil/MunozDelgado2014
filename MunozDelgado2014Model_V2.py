@@ -7,7 +7,7 @@ DOI: 10.1109/TPWRS.2014.2364960
 
 @Code Athor: Jonas Villela de Souza
 @Initial Date: June 6, 2022
-@Version Date: June 6, 2022
+@Version Date: June 17, 2022
 """
 
 import pyomo.environ as pyo
@@ -188,6 +188,7 @@ def A_l_kV_rule(model):
                 index[l,k,v] = A_l_kV[l][k-1][v-1]
     return index
 model.A_l_kV = pyo.Param(model.L, model.K_l['NAF'],model.n__V, initialize=A_l_kV_rule) #Width of block v of the piecewise linear energy losses for feeders.
+
 # =============================================================================
 # Variables
 # =============================================================================
