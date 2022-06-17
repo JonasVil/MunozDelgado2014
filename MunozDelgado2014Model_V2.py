@@ -340,7 +340,7 @@ model.y_p_skt = pyo.Var(model.y_p_rule,
 def g_tr_rule(model):
     index = []
     for tr in model.TR:
-        for s in model.Omega_N:
+        for s in model.Omega_SS:
             for k in model.K_tr[tr]:
                 for t in model.T:
                     for b in model.B:
@@ -579,7 +579,7 @@ for l in model.L:
                         
 model.eq9 = pyo.ConstraintList()
 for tr in model.TR:
-    for s in model.Omega_N:
+    for s in model.Omega_SS:
         for k in model.K_tr[tr]:
             for t in model.T:
                 for b in model.B:
