@@ -70,6 +70,7 @@ model.Upsilon_l = pyo.Set(model.L, initialize=Upsilon_l_rule) #Set of branches w
 def Omega_LN_t_rule(model, t):
     return Omega_LN_t[t]
 model.Omega_LN_t = pyo.Param(model.T, initialize=Omega_LN_t_rule)
+
 # =============================================================================
 # Parameters
 # =============================================================================
@@ -188,6 +189,10 @@ def A_l_kV_rule(model):
                 index[l,k,v] = A_l_kV[l][k-1][v-1]
     return index
 model.A_l_kV = pyo.Param(model.L, model.K_l['NAF'],model.n__V, initialize=A_l_kV_rule) #Width of block v of the piecewise linear energy losses for feeders.
+
+model.V_ = pyo.Param(initialize=V_) #Lower bound for nodal voltages
+
+model.Vup = pyo.Param(initialize=Vup) #Upper bound for nodal voltages
 
 # =============================================================================
 # Variables
@@ -398,6 +403,12 @@ model.ftio_l_srktb = pyo.Var(model.f_l_rule,
                           bounds=(0.0,None)
     )
 
+model.V_stb = pyo.Var(model.Omega_N, 
+                      model.T, 
+                      model.B,
+                      bounds=(0.0,None)
+    )
+
 # =============================================================================
 # Objective Function
 # =============================================================================
@@ -533,4 +544,10 @@ def eq6_rule(model,t):
         )
 model.eq6 = pyo.Constraint(model.T, rule=eq6_rule)
 
+# =============================================================================
+# Kirchhoff's Laws and Operational Limits
+# =============================================================================
 
+def eq7_rule(model, s, t, b):
+    return pyo.inequality(model.V_ ,model.V_stb[s,t,b], model.Vup)
+model.eq7 = pyo.Constraint(model.Omega_N, model.T, model.B, rule=eq7_rule)
