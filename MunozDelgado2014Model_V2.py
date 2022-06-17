@@ -202,6 +202,14 @@ def Fup_l_k_rule(model):
     return index
 model.Fup_l_k = pyo.Param(model.L, model.K_l['NAF'], initialize=Fup_l_k_rule) #Upper limit for actual current flows through (MVA)
 
+def Gup_tr_k_rule(model):
+    index = {}
+    for tr in model.TR:
+        for k in model.K_tr[tr]:
+            index[tr,k] = Gup_tr_k[tr][k-1]
+    return index
+model.Gup_tr_k = pyo.Param(model.TR, model.K_tr['NT'], initialize=Gup_tr_k_rule) #Upper limit for current injections of transformers.
+
 # =============================================================================
 # Variables
 # =============================================================================
@@ -569,3 +577,33 @@ for l in model.L:
                     for b in model.B:
                         model.eq8.add(model.f_l_srktb[l,s,r,k,t,b] <= model.y_l_srkt[l,s,r,k,t]*model.Fup_l_k[l,k])
                         
+model.eq9 = pyo.ConstraintList()
+for tr in model.TR:
+    for s in model.Omega_N:
+        for k in model.K_tr[tr]:
+            for t in model.T:
+                for b in model.B:
+                    model.eq9.add(model.g_tr_sktb[tr,s,k,t,b] <= model.y_tr_skt[tr,s,k,t]*model.Gup_tr_k[tr,k])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
