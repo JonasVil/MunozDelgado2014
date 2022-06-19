@@ -765,7 +765,11 @@ for l in model.L_nl:
                     for t in model.T) <= 1
         )
         
-        
+model.eq18 = pyo.ConstraintList()
+for s in model.Omega_SS:
+    model.eq18.add(sum(model.x_SS_st[s,t]
+                       for t in model.T) <= 1
+    )       
         
         
         
