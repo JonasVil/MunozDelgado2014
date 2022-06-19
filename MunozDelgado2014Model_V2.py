@@ -805,6 +805,14 @@ for t in model.T:
                                <= 1
                 )       
         
-        
+model.eq23 = pyo.ConstraintList()
+for t in model.T:
+    for l in ["NRF", "NAF"]:
+        for k in model.K_l[l]:
+            for s,r in model.Upsilon_l[l]:
+                model.eq23.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] 
+                               <= sum(model.x_l_srkt[l,s,r,k,y]
+                                   for y in range(1,t+1))
+                )        
         
         
