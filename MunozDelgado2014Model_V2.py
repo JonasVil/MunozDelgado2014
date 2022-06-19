@@ -256,7 +256,11 @@ def Z_l_k_rule(model):
         for k in model.K_l[l]:
             index[l,k] = Z_l_k[l][k-1]
     return index
-model.Z_l_k = pyo.Param(model.L, model.K_l['NAF'], initialize=Z_l_k_rule)
+model.Z_l_k = pyo.Param(model.L, model.K_l['NAF'], initialize=Z_l_k_rule) #Unitary impedance magnitude of feeders.
+
+def IB__t_rule(model, t):
+    return IB__t[t-1]
+model.IB__t = pyo.Param(model.T, initialize=IB__t_rule) #Investment budget for stage t.
 
 # =============================================================================
 # Variables
@@ -845,7 +849,24 @@ for t in model.T:
                                    for y in range(1,t+1))
                                )        
 
-        
+def eq27_rule(model,t):
+    return ((sum(sum(sum(model.C_Il_k[l,k]*model.l__sr[s,r]*model.x_l_srkt[l,s,r,k,t]
+                for s,r in model.Upsilon_l[l])
+            for k in model.K_l[l])
+        for l in ["NRF", "NAF"])
+        + sum(model.C_ISS_s[s]*model.x_SS_st[s,t]
+            for s in model.Omega_SS)
+        + sum(sum(model.C_INT_k[k]*model.x_SS_st[s,t]
+                for s in model.Omega_SS)
+            for k in model.K_tr["NT"])
+        + sum(sum(sum(model.C_Ip_k[p,k]*model.pf*model.Gup_p_k[p,k]*model.x_p_skt[p,s,k,t]
+                    for s in model.Omega_p[p])
+                for k in model.K_p[p])
+            for p in model.P)
+        <= model.IB__t[t])
+    )
+
+model.eq27 = pyo.Constraint(model.T, rule=eq27_rule)        
         
         
         
