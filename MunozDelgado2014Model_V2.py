@@ -228,6 +228,11 @@ def D__st_rule(model):
     return index
 model.D__st = pyo.Param(model.Omega_N, model.T, initialize=D__st_rule) #Actual nodal peak demand
 
+def Gmax_W_sktb_rule(model, s, k, t, b):
+    return Gmax_W_sktb[s-1,k-1,t-1,b-1]
+model.Gmax_W_sktb = pyo.Param(model.Omega_p["W"], model.K_p["W"], model.T, model.B, initialize=Gmax_W_sktb_rule) #Maximum wind power availability.
+
+
 # =============================================================================
 # Variables
 # =============================================================================
@@ -620,7 +625,12 @@ for s in model.Omega_p["C"]:
                 model.eq11.add(model.g_p_sktb["C",s,k,t,b] <= model.y_p_skt["C",s,k,t]*model.Gup_p_k["C",k])
 
 
-
+model.eq12 = pyo.ConstraintList()
+for s in model.Omega_p["W"]:
+    for k in model.K_p["W"]:
+        for t in model.T:
+            for b in model.B:
+                model.eq12.add(model.g_p_sktb["W",s,k,t,b] <= model.y_p_skt["W",s,k,t]*min(model.Gup_p_k["W",k],model.Gmax_W_sktb[s,k,t,b]))
 
 
 
