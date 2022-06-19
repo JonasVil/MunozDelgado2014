@@ -55,9 +55,30 @@ model.K_tr = pyo.Set(model.TR, initialize=K_tr_rule) #Set of new transformers op
 model.Omega_SS = pyo.Set(initialize=Omega_SS) #Set of substation nodes
 model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
 
-def Omega_l_s_rule(model, l, s):
-    return Omega_l_s[l][s-1]
+
+def Omega_l_s_rule(model,l,s):   
+    if len(Omega_l_s[l][s-1]) != 0:
+        return Omega_l_s[l][s-1]
+    else:
+        return pyo.Set.Skip
 model.Omega_l_s = pyo.Set(model.L, model.Omega_N, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
+
+# =============================================================================
+# def Omega_l_s_rule(model):
+#     index = {}
+#     for l in model.L:
+#         for s in model.Omega_N | model.Omega_SS:
+#             if len(Omega_l_s[l][s-1]) != 0:
+#                 index[l,s] = Omega_l_s[l][s-1]
+#     return index
+# model.Omega_l_s = pyo.Set(model.L, model.Omega_N, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
+# =============================================================================
+
+# =============================================================================
+# def Omega_l_s_rule(model, l, s):
+#     return Omega_l_s[l][s-1]
+# model.Omega_l_s = pyo.Set(model.L, model.Omega_N, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
+# =============================================================================
 
 def Omega_p_rule(model, p):
     return Omega_p[p]
@@ -308,6 +329,26 @@ model.x_p_rule = pyo.Set(dimen=4, initialize=x_p_rule)
 model.x_p_skt = pyo.Var(model.x_p_rule,
                         within=pyo.Binary
     ) #Binary investment variables for generators.
+
+
+# =============================================================================
+# def y_l_rule(model):
+#     index = []
+#     for (s,r),le,l in branch: 
+#     
+#     for l in model.L:
+#         for s in model.Omega_N:
+#             for r in model.Omega_l_s[l,s]:
+#                 for k in model.K_l[l]:
+#                     for t in model.T:
+#                         index.append((l,s,r,k,t))
+#     return index 
+# 
+# model.y_l_rule = pyo.Set(dimen=5, initialize=y_l_rule)
+# model.y_l_srkt = pyo.Var(model.y_l_rule,
+#                          within=pyo.Binary
+#     )
+# =============================================================================
 
 def y_l_rule(model):
     index = []
