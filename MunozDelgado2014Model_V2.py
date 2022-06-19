@@ -786,7 +786,15 @@ for p in model.P:
             for t in model.T) <= 1
         )        
         
-        
+model.eq21 = pyo.ConstraintList()
+for s in model.Omega_SS:
+    for k in model.K_tr["NT"]:
+        for t in model.T:
+            model.eq21.add(model.x_NT_skt[s,k,t] 
+                           <=
+                           sum(model.x_SS_st[s,y] 
+                               for y in range(1, t+1))       
+            )        
         
         
         
