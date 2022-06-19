@@ -608,7 +608,7 @@ for tr in model.TR:
 
 model.eq10 = pyo.ConstraintList()
 for t in model.T:
-    for s in model.Omega_N:
+    for s in model.Omega_LN_t[t]:
         for b in model.B:
             model.eq10.add(model.d_U_stb[s,t,b] <= model.Mi__b[b]*model.D__st[s,t])
 
