@@ -90,6 +90,8 @@ model.Omega_LN_t = pyo.Param(model.T, initialize=Omega_LN_t_rule)
 # Parameters
 # =============================================================================
 
+model.H = pyo.Param(initialize=H, domain=Reals)
+
 model.Vare = pyo.Param(initialize=Vare, domain=Reals) #Penetration limit for distributed generation.
 
 model.i = pyo.Param(initialize=i, domain=Reals) #Annual interest rate.
@@ -210,9 +212,11 @@ def A_l_kV_rule(model):
     return index
 model.A_l_kV = pyo.Param(model.L, model.K_l['NAF'],model.n__V, initialize=A_l_kV_rule) #Width of block v of the piecewise linear energy losses for feeders.
 
-model.V_ = pyo.Param(initialize=V_) #Lower bound for nodal voltages
+model.Vbase = pyo.Param(initialize=Vbase) #Base voltage.
 
-model.Vup = pyo.Param(initialize=Vup) #Upper bound for nodal voltages
+model.V_ = pyo.Param(initialize=V_) #Lower bound for nodal voltages.
+
+model.Vup = pyo.Param(initialize=Vup) #Upper bound for nodal voltages.
 
 def Fup_l_k_rule(model):
     index = {}
@@ -220,7 +224,7 @@ def Fup_l_k_rule(model):
         for k in model.K_l[l]:
             index[l,k] = Fup_l_k[l][k-1]
     return index
-model.Fup_l_k = pyo.Param(model.L, model.K_l['NAF'], initialize=Fup_l_k_rule) #Upper limit for actual current flows through (MVA)
+model.Fup_l_k = pyo.Param(model.L, model.K_l['NAF'], initialize=Fup_l_k_rule) #Upper limit for actual current flows through (MVA).
 
 def Gup_tr_k_rule(model):
     index = {}
@@ -232,7 +236,7 @@ model.Gup_tr_k = pyo.Param(model.TR, model.K_tr['NT'], initialize=Gup_tr_k_rule)
 
 def Mi__b_rule(model, b):
     return Mi__b[b-1]
-model.Mi__b = pyo.Param(model.B, initialize=Mi__b_rule) #Loading factor of load level b
+model.Mi__b = pyo.Param(model.B, initialize=Mi__b_rule) #Loading factor of load level b.
 
 def D__st_rule(model):
     index = {}
@@ -240,7 +244,7 @@ def D__st_rule(model):
         for t in model.T:
             index[s,t] = D__st[s-1,t-1]
     return index
-model.D__st = pyo.Param(model.Omega_N, model.T, initialize=D__st_rule) #Actual nodal peak demand
+model.D__st = pyo.Param(model.Omega_N, model.T, initialize=D__st_rule) #Actual nodal peak demand.
 
 def Gmax_W_sktb_rule(model, s, k, t, b):
     return Gmax_W_sktb[s-1,k-1,t-1,b-1]
@@ -727,25 +731,25 @@ for t in model.T:
 # =============================================================================
 
 
-# =============================================================================
-# model.eq16_1 = pyo.ConstraintList()
-# for t in model.T:
-#     for b in model.B:
-#         for l in model.L:
-#             for s,r in model.Upsilon_l[l]:
-#                 for k in model.K_l[l]:
-#                     model.eq16_1.add((-Z_l_k[l][k-1]*l__sr[s-1,r-1]*model.f_l_srktb[l,s,r,k,t,b]/Vbase + (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
-#                                      <= H*(1-model.y_l_srkt[l,s,r,k,t]))
-# 
-# model.eq16_2 = pyo.ConstraintList()
-# for t in T:
-#     for b in B:
-#         for l in L:
-#             for r in Omega_N:
-#                 for s in Omega_l_s[l][r-1]:
-#                     for k in K_l[l]:
-#                         model.eq16_2.add((Z_l_k[l][k-1]*l__sr[s-1,r-1]*model.f_l_srktb[l,s,r,k,t,b]/Vbase - (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
-#                                          <= H*(1-model.y_l_srkt[l,s,r,k,t]))
-# =============================================================================
-
+model.eq16_1 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for l in model.L:
+            for s,r in model.Upsilon_l[l]:
+                for k in model.K_l[l]:
+                    model.eq16_1.add((-model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,r,s,k,t,b]/model.Vbase + (model.V_stb[r,t,b] - model.V_stb[s,t,b]))
+                                     <= model.H*(1-model.y_l_srkt[l,r,s,k,t]))
+                    model.eq16_1.add((-model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase + (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
+                                     <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
+                    
+model.eq16_2 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for l in model.L:
+            for s,r in model.Upsilon_l[l]:
+                for k in model.K_l[l]:
+                    model.eq16_2.add((model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,r,s,k,t,b]/model.Vbase - (model.V_stb[r,t,b] - model.V_stb[s,t,b]))
+                                     <= model.H*(1-model.y_l_srkt[l,r,s,k,t]))
+                    model.eq16_2.add((model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase - (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
+                                     <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
 
