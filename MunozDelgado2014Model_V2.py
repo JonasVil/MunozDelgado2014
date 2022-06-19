@@ -815,4 +815,58 @@ for t in model.T:
                                    for y in range(1,t+1))
                 )        
         
+model.eq24 = pyo.ConstraintList()
+for t in model.T:
+    for l in ["ERF"]:
+        for k in model.K_l[l]:
+            for s,r in model.Upsilon_l[l]:
+                model.eq24.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] 
+                               <= 1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
+                                       for z in model.K_l["NRF"])
+                                   for y in range(1,t+1))
+                )
+        
+model.eq25 = pyo.ConstraintList()
+for t in model.T:
+    for s in model.Omega_SS:
+        for k in model.K_tr["NT"]:
+            model.eq25.add(model.y_tr_skt["NT", s, k, t] 
+                           <= sum(model.x_NT_skt[s,k,y]
+                               for y in range(1,t+1))
+                           )        
+        
+model.eq26 = pyo.ConstraintList()
+for t in model.T:
+    for p in model.P:
+        for s in model.Omega_p[p]:
+            for k in model.K_p[p]:
+                model.eq26.add(model.y_p_skt[p,s,k,t] <=
+                               sum(model.x_p_skt[p,s,k,y]
+                                   for y in range(1,t+1))
+                               )        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
