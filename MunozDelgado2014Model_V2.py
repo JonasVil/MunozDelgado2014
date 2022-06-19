@@ -242,11 +242,11 @@ model.Mi__b = pyo.Param(model.B, initialize=Mi__b_rule) #Loading factor of load 
 
 def D__st_rule(model):
     index = {}
-    for s in model.Omega_N:
+    for s in model.Omega_N | model.Omega_SS:
         for t in model.T:
             index[s,t] = D__st[s-1,t-1]
     return index
-model.D__st = pyo.Param(model.Omega_N, model.T, initialize=D__st_rule) #Actual nodal peak demand.
+model.D__st = pyo.Param(model.Omega_N | model.Omega_SS, model.T, initialize=D__st_rule, domain=Reals) #Actual nodal peak demand.
 
 def Gmax_W_sktb_rule(model, s, k, t, b):
     return Gmax_W_sktb[s-1,k-1,t-1,b-1]
@@ -291,7 +291,7 @@ model.C_U_t = pyo.Var(model.T,
 model.C_TPV = pyo.Var(bounds=(0.0,None)
                       )
 
-model.d_U_stb = pyo.Var(model.Omega_N, 
+model.d_U_stb = pyo.Var(model.Omega_N | model.Omega_SS, 
                         model.T,
                         model.B,
                         bounds=(0.0,None)
@@ -676,25 +676,49 @@ for t in model.T:
 model.eq14 = pyo.ConstraintList()
 for t in model.T:
     for b in model.B:
-        for s in model.Omega_N:
-            model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-                        for r in model.Omega_l_s[l,s]) 
-                    for k in model.K_l[l])
-                for l in model.L) == -model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
-                        )
+        for s in model.Omega_N | model.Omega_SS:
+            if s in model.Omega_SS:
+                model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+                            for r in model.Omega_l_s[l,s]) 
+                        for k in model.K_l[l])
+                    for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
+                                    for k in model.K_tr[tr])
+                                for tr in model.TR)
+                                ) - model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
+                            )
+                                                  
+            else:                                     
+                model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+                            for r in model.Omega_l_s[l,s]) 
+                        for k in model.K_l[l])
+                    for l in model.L) == -model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
+                            )
+# =============================================================================
+# model.eq14 = pyo.ConstraintList()
+# for t in model.T:
+#     for b in model.B:
+#         for s in model.Omega_N:
+#             model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+#                         for r in model.Omega_l_s[l,s]) 
+#                     for k in model.K_l[l])
+#                 for l in model.L) == -model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
+#                         )
+# =============================================================================
 
-model.eq14_aux1 = pyo.ConstraintList()
-for t in model.T:
-    for b in model.B:
-        for s in model.Omega_SS:
-            model.eq14_aux1.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-                        for r in model.Omega_l_s[l,s]) 
-                    for k in model.K_l[l])
-                for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
-                                for k in model.K_tr[tr])
-                            for tr in model.TR)
-                        )                            
-                  )
+# =============================================================================
+# model.eq14_aux1 = pyo.ConstraintList()
+# for t in model.T:
+#     for b in model.B:
+#         for s in model.Omega_SS:
+#             model.eq14_aux1.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+#                         for r in model.Omega_l_s[l,s]) 
+#                     for k in model.K_l[l])
+#                 for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
+#                                 for k in model.K_tr[tr])
+#                             for tr in model.TR)
+#                         )                            
+#                   )
+# =============================================================================
 
 model.eq14_aux2 = pyo.ConstraintList()
 for t in model.T:
@@ -979,7 +1003,36 @@ for tr in model.TR:
 Variable_Util_tr = pd.DataFrame(Variable_Util_tr)        
         
         
-        
+#Actual current flows through feeders
+Actual_C_Flow_l = []
+for l in model.L: #Type of line
+    for s,r in model.Upsilon_l[l]:
+        for k in model.K_l[l]: #Line option 
+            for t in model.T: #Time stage
+                for b in model.B: #Load level
+                    if pyo.value(model.f_l_srktb[l,s,r,k,t,b]) > 0.1:
+                        actual_aux = {
+                            'T_Line': l,
+                            'From': s,
+                            'To': r,
+                            'Option': k,
+                            'Stage': t,
+                            'L_level': b,
+                            'Flow': pyo.value(model.f_l_srktb[l,s,r,k,t,b])
+                            }
+                        Actual_C_Flow_l.append(actual_aux) 
+                    elif pyo.value(model.f_l_srktb[l,r,s,k,t,b]) > 0.1:
+                        actual_aux = {
+                            'T_Line': l,
+                            'From': r,
+                            'To': s,
+                            'Option': k,
+                            'Stage': t,
+                            'L_level': b,
+                            'Flow': pyo.value(model.f_l_srktb[l,r,s,k,t,b])
+                            }
+                        Actual_C_Flow_l.append(actual_aux) 
+Actual_C_Flow_l = pd.DataFrame(Actual_C_Flow_l)         
         
         
         
