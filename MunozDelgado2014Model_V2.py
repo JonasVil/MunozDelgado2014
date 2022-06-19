@@ -613,7 +613,7 @@ for t in model.T:
             model.eq10.add(model.d_U_stb[s,t,b] <= model.Mi__b[b]*model.D__st[s,t])
 
 model.eq11 = pyo.ConstraintList()
-for s in model.Omega_N:
+for s in model.Omega_p["C"]:
     for k in model.K_p["C"]:
         for t in model.T:
             for b in model.B:
