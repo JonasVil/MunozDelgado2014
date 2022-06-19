@@ -753,3 +753,28 @@ for t in model.T:
                     model.eq16_2.add((model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase - (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
                                      <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
 
+# =============================================================================
+# Investiment Constraints
+# =============================================================================
+
+model.eq17 = pyo.ConstraintList()
+for l in model.L_nl:
+    for s,r in model.Upsilon_l[l]:
+        model.eq17.add(sum(sum(model.x_l_srkt[l,s,r,k,t]
+                        for k in model.K_l[l])
+                    for t in model.T) <= 1
+        )
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
