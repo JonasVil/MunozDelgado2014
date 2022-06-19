@@ -442,15 +442,15 @@ model.delta_l_srktbv = pyo.Var(model.delta_l_rule,
                                bounds=(0.0,None)                             
     )
 
-def f_l_rule(m):
+def f_l_rule(model):
     index = []
     for l in model.L:
-        for s,r in model.Upsilon_l[l]:
-            for k in model.K_l[l]:
-                for t in model.T:
-                    for b in model.B:
-                        index.append((l,s,r,k,t,b))
-                        index.append((l,r,s,k,t,b))
+        for s in model.Omega_N:
+            for r in model.Omega_l_s[l,s]:
+                for k in model.K_l[l]:
+                    for t in model.T:
+                        for b in model.B:
+                            index.append((l,s,r,k,t,b))
     return index
             
 model.f_l_rule = pyo.Set(dimen=6, initialize=f_l_rule)
