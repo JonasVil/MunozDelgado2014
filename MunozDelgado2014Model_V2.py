@@ -673,52 +673,50 @@ for t in model.T:
             for s in model.Omega_LN_t[t])       
         )
    
-model.eq14 = pyo.ConstraintList()
-for t in model.T:
-    for b in model.B:
-        for s in model.Omega_N | model.Omega_SS:
-            if s in model.Omega_SS:
-                model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-                            for r in model.Omega_l_s[l,s]) 
-                        for k in model.K_l[l])
-                    for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
-                                    for k in model.K_tr[tr])
-                                for tr in model.TR)
-                                ) - model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
-                            )
-                                                  
-            else:                                     
-                model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-                            for r in model.Omega_l_s[l,s]) 
-                        for k in model.K_l[l])
-                    for l in model.L) == -model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
-                            )
 # =============================================================================
 # model.eq14 = pyo.ConstraintList()
 # for t in model.T:
 #     for b in model.B:
-#         for s in model.Omega_N:
-#             model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-#                         for r in model.Omega_l_s[l,s]) 
-#                     for k in model.K_l[l])
-#                 for l in model.L) == -model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
-#                         )
+#         for s in model.Omega_N | model.Omega_SS:
+#             if s in model.Omega_SS:
+#                 model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+#                             for r in model.Omega_l_s[l,s]) 
+#                         for k in model.K_l[l])
+#                     for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
+#                                     for k in model.K_tr[tr])
+#                                 for tr in model.TR)
+#                                 ) - model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
+#                             )
+#                                                   
+#             else:                                     
+#                 model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+#                             for r in model.Omega_l_s[l,s]) 
+#                         for k in model.K_l[l])
+#                     for l in model.L) == -model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
+#                             )
 # =============================================================================
+model.eq14 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for s in model.Omega_N:
+            model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+                        for r in model.Omega_l_s[l,s]) 
+                    for k in model.K_l[l])
+                for l in model.L) == -model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
+                        )
 
-# =============================================================================
-# model.eq14_aux1 = pyo.ConstraintList()
-# for t in model.T:
-#     for b in model.B:
-#         for s in model.Omega_SS:
-#             model.eq14_aux1.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-#                         for r in model.Omega_l_s[l,s]) 
-#                     for k in model.K_l[l])
-#                 for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
-#                                 for k in model.K_tr[tr])
-#                             for tr in model.TR)
-#                         )                            
-#                   )
-# =============================================================================
+model.eq14_aux1 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for s in model.Omega_SS:
+            model.eq14_aux1.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+                        for r in model.Omega_l_s[l,s]) 
+                    for k in model.K_l[l])
+                for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
+                                for k in model.K_tr[tr])
+                            for tr in model.TR)
+                        )                            
+                  )
 
 model.eq14_aux2 = pyo.ConstraintList()
 for t in model.T:

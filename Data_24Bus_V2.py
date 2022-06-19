@@ -221,6 +221,7 @@ Upsilon_N["NRF"] = Upsilon_N["ERF"]
 # Sets of Nodes
 # =============================================================================
 
+
 Omega_SS = [21, 22, 23, 24] #Sets of nodes connected to node s by substation nodes
 Omega_SSE = [21, 22] # Fixing eq14
 Omega_SSN = [23, 24] # Fixing eq14
