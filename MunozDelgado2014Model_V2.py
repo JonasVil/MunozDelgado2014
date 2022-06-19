@@ -402,10 +402,7 @@ model.delta_tr_rule = pyo.Set(dimen=6, initialize=delta_tr_rule)
 model.delta_tr_sktbv = pyo.Var(model.delta_tr_rule,
                                bounds=(0.0,None)
     )
-
-        
-
-            
+           
 def delta_l_rule(m):
     index = []
     for l in model.L:
@@ -423,39 +420,6 @@ model.delta_l_srktbv = pyo.Var(model.delta_l_rule,
                                bounds=(0.0,None)                             
     )
 
-# =============================================================================
-# def delta_l_rule(m):
-#     index = []
-#     for l in model.L:
-#         for s in model.Omega_N:
-#             for r in model.Omega_l_s[l,s]:
-#                 for k in model.K_l[l]:
-#                     for t in model.T:
-#                         for b in model.B:
-#                             for v in model.n__V:
-#                                 index.append((l,s,r,k,t,b,v))
-#     return index 
-# 
-# model.delta_l_rule = pyo.Set(dimen=7, initialize=delta_l_rule)
-# model.delta_l_srktbv = pyo.Var(model.delta_l_rule,
-#                                bounds=(0.0,None)                             
-#     )
-# =============================================================================
-
-# =============================================================================
-# def f_l_rule(m):
-#     index = []
-#     for l in model.L:
-#         for s in model.Omega_N:
-#             for r in model.Omega_l_s[l,s]:
-#                 for k in model.K_l[l]:
-#                     for t in model.T:
-#                         for b in model.B:
-#                             index.append((l,s,r,k,t,b))
-#     return index
-#             
-# model.f_l_rule = pyo.Set(dimen=6, initialize=f_l_rule)
-# =============================================================================
 def f_l_rule(m):
     index = []
     for l in model.L:
