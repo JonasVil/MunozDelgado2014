@@ -691,9 +691,33 @@ for t in model.T:
                         )
 
 
+model.eq14_aux3 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for s in model.Omega_p['W']:
+            model.eq14_aux2.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+                        for r in model.Omega_l_s[l,s]) 
+                    for k in model.K_l[l])
+                for l in model.L) == sum(model.g_p_sktb['W',s,k,t,b]
+                            for k in model.K_p['W'])
+                        )
 
-
-
+# =============================================================================
+# model.eq14_aux3 = pyo.ConstraintList() # It avoids "ET" transf. on new substations
+# for t in T:
+#     for b in B:
+#         for s in Omega_SSN:
+#             for k in K_tr['ET']:
+#                 model.eq14_aux3.add(model.y_tr_skt['ET',s,k,t] == 0)
+# 
+# model.eq14_aux4 = pyo.ConstraintList() # It allows one type of transf. on existing substation nodes
+# for t in T:
+#     for s in Omega_SSE:
+#         model.eq14_aux4.add(sum(sum(model.y_tr_skt[tr,s,k,t]
+#                     for k in K_tr[tr])
+#                 for tr in TR) <= 1
+#             )
+# =============================================================================
 
 
 
