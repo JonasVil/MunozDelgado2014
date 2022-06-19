@@ -771,7 +771,12 @@ for s in model.Omega_SS:
                        for t in model.T) <= 1
     )       
         
-        
+model.eq19 = pyo.ConstraintList()
+for s in model.Omega_SS:
+    model.eq19.add(sum(sum(model.x_NT_skt[s,k,t]
+                for k in model.K_tr["NT"])
+            for t in model.T) <= 1
+        )        
         
         
         
