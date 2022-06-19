@@ -56,12 +56,19 @@ model.K_tr = pyo.Set(model.TR, initialize=K_tr_rule) #Set of new transformers op
 model.Omega_SS = pyo.Set(initialize=Omega_SS) #Set of substation nodes
 model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
 
+
 def Omega_l_s_rule(model,l,s):   
-    if len(Omega_l_s[l][s-1]) != 0:
-        return Omega_l_s[l][s-1]
-    else:
-        return pyo.Set.Skip
+    return Omega_l_s[l][s-1]
 model.Omega_l_s = pyo.Set(model.L, model.Omega_N | model.Omega_SS, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
+
+# =============================================================================
+# def Omega_l_s_rule(model,l,s):   
+#     if len(Omega_l_s[l][s-1]) != 0:
+#         return Omega_l_s[l][s-1]
+#     else:
+#         return pyo.Set.Skip
+# model.Omega_l_s = pyo.Set(model.L, model.Omega_N | model.Omega_SS, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
+# =============================================================================
 
 def Omega_p_rule(model, p):
     return Omega_p[p]
@@ -70,6 +77,10 @@ model.Omega_p = pyo.Set(model.P, initialize=Omega_p_rule) #Sets of possible node
 def Upsilon_l_rule(model,l):
     return Upsilon_l[l]
 model.Upsilon_l = pyo.Set(model.L, initialize=Upsilon_l_rule) #Set of branches with feeders of type l.
+
+def Upsilon_N_rule(model,l):
+    return Upsilon_N[l]
+model.Upsilon_N = pyo.Set(model.L, initialize=Upsilon_N_rule) #Set of nodes with feeders of type l.
 
 def Omega_LN_t_rule(model, t):
     return Omega_LN_t[t]
@@ -645,9 +656,28 @@ for t in model.T:
             for s in model.Omega_LN_t[t])       
         )
    
+model.eq14 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for s in model.Omega_N:
+            model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+                        for r in model.Omega_l_s[l,s]) 
+                    for k in model.K_l[l])
+                for l in model.L) == - model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
+                        )
 
-
-
+model.eq14_aux1 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for s in model.Omega_SS:
+            model.eq14_aux1.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+                        for r in model.Omega_l_s[l,s]) 
+                    for k in model.K_l[l])
+                for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
+                                for k in model.K_tr[tr])
+                            for tr in model.TR)
+                        )                            
+                  )
 
 
 

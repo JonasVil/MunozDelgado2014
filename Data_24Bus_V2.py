@@ -198,13 +198,24 @@ Upsilon_l = {"EFF": [],
              "NAF": []
              }
 
+Upsilon_N = {"EFF": [],
+             "ERF": [],
+             "NRF": [],
+             "NAF": []
+             }
+
 for branch_type in L: #Set of branches with feeders of type l
     for b in branch:
         if b[2] == branch_type:
             s = b[0][0]
             r = b[0][1]
             Upsilon_l[branch_type].append((s,r))
+            if s not in Upsilon_N[branch_type]:
+                Upsilon_N[branch_type].append(s)
+            if r not in Upsilon_N[branch_type]:
+                Upsilon_N[branch_type].append(r)
 Upsilon_l["NRF"] = Upsilon_l["ERF"]
+Upsilon_N["NRF"] = Upsilon_N["ERF"]
 
 # =============================================================================
 # Sets of Nodes
