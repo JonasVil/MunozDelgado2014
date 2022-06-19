@@ -679,6 +679,17 @@ for t in model.T:
                         )                            
                   )
 
+model.eq14_aux2 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for s in model.Omega_p['C']:
+            model.eq14_aux2.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+                        for r in model.Omega_l_s[l,s]) 
+                    for k in model.K_l[l])
+                for l in model.L) == sum(model.g_p_sktb['C',s,k,t,b]
+                            for k in model.K_p['C'])
+                        )
+
 
 
 
