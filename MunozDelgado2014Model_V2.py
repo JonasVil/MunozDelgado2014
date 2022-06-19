@@ -332,7 +332,7 @@ model.y_l_srkt = pyo.Var(model.y_l_rule,
 def y_tr_rule(model):
     index = []
     for tr in model.TR:
-        for s in model.Omega_N:
+        for s in model.Omega_SS:
             for k in model.K_tr[tr]:
                 for t in model.T:
                     index.append((tr,s,k,t))
@@ -553,24 +553,25 @@ for tr in model.TR:
                     for v in model.n__V:
                         model.eq5_aux2.add(model.delta_tr_sktbv[tr,s,k,t,b,v] <= model.A_tr_kV[tr,k,v])
 
+
 model.eq5_aux3 = pyo.ConstraintList()
 for l in model.L:
-    for r in model.Omega_N:
-        for s in model.Omega_l_s[l,r]:
-            for k in model.K_l[l]:
-                for t in model.T:
-                    for b in model.B:
-                        model.eq5_aux3.add(model.f_l_srktb[l,s,r,k,t,b] == sum(model.delta_l_srktbv[l,s,r,k,t,b,v] for v in model.n__V))
+    for s,r in model.Upsilon_l[l]:
+        for k in model.K_l[l]:
+            for t in model.T:
+                for b in model.B:
+                    model.eq5_aux3.add(model.f_l_srktb[l,s,r,k,t,b] == sum(model.delta_l_srktbv[l,s,r,k,t,b,v] for v in model.n__V))
+                    model.eq5_aux3.add(model.f_l_srktb[l,r,s,k,t,b] == sum(model.delta_l_srktbv[l,r,s,k,t,b,v] for v in model.n__V))
 
 model.eq5_aux4 = pyo.ConstraintList()
 for l in model.L:
-    for r in model.Omega_N:
-        for s in model.Omega_l_s[l,r]:
-            for k in model.K_l[l]:
-                for t in model.T:
-                    for b in model.B:
-                        for v in model.n__V:
-                            model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= model.A_l_kV[l,k,v])
+    for s,r in model.Upsilon_l[l]:
+        for k in model.K_l[l]:
+            for t in model.T:
+                for b in model.B:
+                    for v in model.n__V:
+                        model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= model.A_l_kV[l,k,v])
+                        model.eq5_aux4.add(model.delta_l_srktbv[l,r,s,k,t,b,v] <= model.A_l_kV[l,k,v])
 
 
 def eq6_rule(model,t):
@@ -590,12 +591,12 @@ model.eq7 = pyo.Constraint(model.Omega_N, model.T, model.B, rule=eq7_rule)
 
 model.eq8 = pyo.ConstraintList()
 for l in model.L:
-    for r in model.Omega_N:
-        for s in model.Omega_l_s[l,r]:
-            for k in model.K_l[l]:
-                for t in model.T:
-                    for b in model.B:
-                        model.eq8.add(model.f_l_srktb[l,s,r,k,t,b] <= model.y_l_srkt[l,s,r,k,t]*model.Fup_l_k[l,k])
+    for s,r in model.Upsilon_l[l]:
+        for k in model.K_l[l]:
+            for t in model.T:
+                for b in model.B:
+                    model.eq8.add(model.f_l_srktb[l,s,r,k,t,b] <= model.y_l_srkt[l,s,r,k,t]*model.Fup_l_k[l,k])
+                    model.eq8.add(model.f_l_srktb[l,r,s,k,t,b] <= model.y_l_srkt[l,r,s,k,t]*model.Fup_l_k[l,k])
                         
 model.eq9 = pyo.ConstraintList()
 for tr in model.TR:
