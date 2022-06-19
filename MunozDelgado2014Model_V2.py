@@ -21,6 +21,7 @@ from Data_24Bus_V2 import *
 
 Vare = 0 #Penetration limit for distributed generation.
 
+
 # =============================================================================
 # Model
 # =============================================================================
@@ -77,6 +78,9 @@ model.Omega_LN_t = pyo.Param(model.T, initialize=Omega_LN_t_rule)
 # =============================================================================
 # Parameters
 # =============================================================================
+
+
+model.Vare = pyo.Param(initialize=Vare, domain=Reals) #Penetration limit for distributed generation.
 
 model.i = pyo.Param(initialize=i, domain=Reals) #Annual interest rate.
 
@@ -624,7 +628,6 @@ for s in model.Omega_p["C"]:
             for b in model.B:
                 model.eq11.add(model.g_p_sktb["C",s,k,t,b] <= model.y_p_skt["C",s,k,t]*model.Gup_p_k["C",k])
 
-
 model.eq12 = pyo.ConstraintList()
 for s in model.Omega_p["W"]:
     for k in model.K_p["W"]:
@@ -632,7 +635,17 @@ for s in model.Omega_p["W"]:
             for b in model.B:
                 model.eq12.add(model.g_p_sktb["W",s,k,t,b] <= model.y_p_skt["W",s,k,t]*min(model.Gup_p_k["W",k],model.Gmax_W_sktb[s,k,t,b]))
 
-
+model.eq13 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        model.eq13.add(sum(sum(sum(model.g_p_sktb[p,s,k,t,b]
+                for s in model.Omega_p[p])
+            for k in model.K_p[p])
+        for p in model.P) 
+        <= Vare*sum(Mi__b[b-1]*D__st[s-1,t-1]
+            for s in Omega_LN_t[t])       
+        )
+   
 
 
 
