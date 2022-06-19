@@ -428,13 +428,13 @@ model.delta_tr_sktbv = pyo.Var(model.delta_tr_rule,
 def delta_l_rule(m):
     index = []
     for l in model.L:
-        for s,r in model.Upsilon_l[l]:
-            for k in model.K_l[l]:
-                for t in model.T:
-                    for b in model.B:
-                        for v in model.n__V:
-                            index.append((l,s,r,k,t,b,v))
-                            index.append((l,r,s,k,t,b,v))
+        for s in model.Omega_N:
+            for r in model.Omega_l_s[l,s]:
+                for k in model.K_l[l]:
+                    for t in model.T:
+                        for b in model.B:
+                            for v in model.n__V:
+                                index.append((l,s,r,k,t,b,v))
     return index 
 
 model.delta_l_rule = pyo.Set(dimen=7, initialize=delta_l_rule)
