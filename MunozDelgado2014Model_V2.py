@@ -79,7 +79,6 @@ model.Omega_LN_t = pyo.Param(model.T, initialize=Omega_LN_t_rule)
 # Parameters
 # =============================================================================
 
-
 model.Vare = pyo.Param(initialize=Vare, domain=Reals) #Penetration limit for distributed generation.
 
 model.i = pyo.Param(initialize=i, domain=Reals) #Annual interest rate.
@@ -642,8 +641,8 @@ for t in model.T:
                 for s in model.Omega_p[p])
             for k in model.K_p[p])
         for p in model.P) 
-        <= Vare*sum(Mi__b[b-1]*D__st[s-1,t-1]
-            for s in Omega_LN_t[t])       
+        <= model.Vare*sum(model.Mi__b[b]*model.D__st[s,t]
+            for s in model.Omega_LN_t[t])       
         )
    
 
