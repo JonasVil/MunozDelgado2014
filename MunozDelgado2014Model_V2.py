@@ -338,14 +338,14 @@ model.x_p_skt = pyo.Var(model.x_p_rule,
     ) #Binary investment variables for generators.
 
 
-def y_l_rule(m):
+def y_l_rule(model):
     index = []
     for l in model.L:
-        for s in model.Omega_N:
-            for r in model.Omega_l_s[l,s]:
-                for K in K_l[l]:
-                    for t in T:
-                        index.append((l,s,r,K,t))
+        for s,r in model.Upsilon_l[l]:
+            for k in model.K_l[l]:
+                for t in model.T:
+                    index.append((l,s,r,k,t))
+                    index.append((l,r,s,k,t))
     return index 
 
 model.y_l_rule = pyo.Set(dimen=5, initialize=y_l_rule)
@@ -357,7 +357,7 @@ model.y_l_srkt = pyo.Var(model.y_l_rule,
 def y_tr_rule(model):
     index = []
     for tr in model.TR:
-        for s in model.Omega_SS:
+        for s in model.Omega_N:
             for k in model.K_tr[tr]:
                 for t in model.T:
                     index.append((tr,s,k,t))
@@ -385,7 +385,7 @@ model.y_p_skt = pyo.Var(model.y_p_rule,
 def g_tr_rule(model):
     index = []
     for tr in model.TR:
-        for s in model.Omega_SS:
+        for s in model.Omega_N:
             for k in model.K_tr[tr]:
                 for t in model.T:
                     for b in model.B:
@@ -400,7 +400,7 @@ model.g_tr_sktb = pyo.Var(model.g_tr_rule,
 def g_p_rule(model):
     index = []
     for p in model.P:
-        for s in model.Omega_p[p]:
+        for s in model.Omega_N:
             for k in model.K_p[p]:
                 for t in model.T:
                     for b in model.B:
@@ -464,7 +464,7 @@ model.ftio_l_srktb = pyo.Var(model.f_l_rule,
                           bounds=(0.0,None)
     )
 
-model.V_stb = pyo.Var(model.Omega_N | model.Omega_SS, 
+model.V_stb = pyo.Var(model.Omega_N, 
                       model.T, 
                       model.B,
                       bounds=(0.0,None)
@@ -612,7 +612,7 @@ model.eq6 = pyo.Constraint(model.T, rule=eq6_rule)
 
 def eq7_rule(model, s, t, b):
     return pyo.inequality(model.V_ ,model.V_stb[s,t,b], model.Vup)
-model.eq7 = pyo.Constraint(model.Omega_N | model.Omega_SS, model.T, model.B, rule=eq7_rule)
+model.eq7 = pyo.Constraint(model.Omega_N, model.T, model.B, rule=eq7_rule)
 
 model.eq8 = pyo.ConstraintList()
 for l in model.L:
@@ -662,28 +662,6 @@ for t in model.T:
             for s in model.Omega_LN_t[t])       
         )
    
-# =============================================================================
-# model.eq14 = pyo.ConstraintList()
-# for t in model.T:
-#     for b in model.B:
-#         for s in model.Omega_N | model.Omega_SS:
-#             if s in model.Omega_SS:
-#                 model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-#                             for r in model.Omega_l_s[l,s]) 
-#                         for k in model.K_l[l])
-#                     for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
-#                                     for k in model.K_tr[tr])
-#                                 for tr in model.TR)
-#                                 ) - model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
-#                             )
-#                                                   
-#             else:                                     
-#                 model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-#                             for r in model.Omega_l_s[l,s]) 
-#                         for k in model.K_l[l])
-#                     for l in model.L) == -model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
-#                             )
-# =============================================================================
 model.eq14 = pyo.ConstraintList()
 for t in model.T:
     for b in model.B:
@@ -691,44 +669,16 @@ for t in model.T:
             model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
                         for r in model.Omega_l_s[l,s]) 
                     for k in model.K_l[l])
-                for l in model.L) == -model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
-                        )
-
-model.eq14_aux1 = pyo.ConstraintList()
-for t in model.T:
-    for b in model.B:
-        for s in model.Omega_SS:
-            model.eq14_aux1.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-                        for r in model.Omega_l_s[l,s]) 
-                    for k in model.K_l[l])
                 for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
                                 for k in model.K_tr[tr])
                             for tr in model.TR)
-                        )                            
-                  )
-
-model.eq14_aux2 = pyo.ConstraintList()
-for t in model.T:
-    for b in model.B:
-        for s in model.Omega_p['C']:
-            model.eq14_aux2.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-                        for r in model.Omega_l_s[l,s]) 
-                    for k in model.K_l[l])
-                for l in model.L) == sum(model.g_p_sktb['C',s,k,t,b]
-                            for k in model.K_p['C'])
+                            + sum(sum(model.g_p_sktb[p,s,k,t,b]
+                                for k in model.K_p[p])
+                            for p in model.P)
+                            - model.Mi__b[b]*model.D__st[s,t]
+                            + model.d_U_stb[s,t,b]
                         )
-
-
-model.eq14_aux3 = pyo.ConstraintList()
-for t in model.T:
-    for b in model.B:
-        for s in model.Omega_p['W']:
-            model.eq14_aux2.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-                        for r in model.Omega_l_s[l,s]) 
-                    for k in model.K_l[l])
-                for l in model.L) == sum(model.g_p_sktb['W',s,k,t,b]
-                            for k in model.K_p['W'])
-                        )
+                )
 
 model.eq14_aux4 = pyo.ConstraintList() # It avoids "ET" transf. on new substations
 for t in model.T:
