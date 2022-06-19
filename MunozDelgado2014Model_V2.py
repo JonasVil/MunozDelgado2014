@@ -246,6 +246,13 @@ def Gmax_W_sktb_rule(model, s, k, t, b):
     return Gmax_W_sktb[s-1,k-1,t-1,b-1]
 model.Gmax_W_sktb = pyo.Param(model.Omega_p["W"], model.K_p["W"], model.T, model.B, initialize=Gmax_W_sktb_rule) #Maximum wind power availability.
 
+def Z_l_k_rule(model):
+    index = {}
+    for l in model.L:
+        for k in model.K_l[l]:
+            index[l,k] = Z_l_k[l][k-1]
+    return index
+model.Z_l_k = pyo.Param(model.L, model.K_l['NAF'], initialize=Z_l_k_rule)
 
 # =============================================================================
 # Variables
@@ -720,6 +727,25 @@ for t in model.T:
 # =============================================================================
 
 
-
+# =============================================================================
+# model.eq16_1 = pyo.ConstraintList()
+# for t in model.T:
+#     for b in model.B:
+#         for l in model.L:
+#             for s,r in model.Upsilon_l[l]:
+#                 for k in model.K_l[l]:
+#                     model.eq16_1.add((-Z_l_k[l][k-1]*l__sr[s-1,r-1]*model.f_l_srktb[l,s,r,k,t,b]/Vbase + (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
+#                                      <= H*(1-model.y_l_srkt[l,s,r,k,t]))
+# 
+# model.eq16_2 = pyo.ConstraintList()
+# for t in T:
+#     for b in B:
+#         for l in L:
+#             for r in Omega_N:
+#                 for s in Omega_l_s[l][r-1]:
+#                     for k in K_l[l]:
+#                         model.eq16_2.add((Z_l_k[l][k-1]*l__sr[s-1,r-1]*model.f_l_srktb[l,s,r,k,t,b]/Vbase - (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
+#                                          <= H*(1-model.y_l_srkt[l,s,r,k,t]))
+# =============================================================================
 
 
