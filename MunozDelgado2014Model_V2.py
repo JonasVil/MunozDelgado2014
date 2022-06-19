@@ -109,8 +109,11 @@ def C_Ip_k_rule(model, p, k):
     return C_Ip_k[p][k-1]
 model.C_Ip_k = pyo.Param(model.P, model.K_p['C'] | model.K_p['W'], initialize=C_Ip_k_rule) #Investment cost coefficients of generators.
 
-def l_sr_rule(model, s, r):
-    return l__sr[s-1,r-1]
+def l_sr_rule(model):
+    index = {}
+    for (s,r),l,typ in branch:
+        index[s,r] = l
+    return index
 model.l__sr = pyo.Param(model.Omega_N, model.Omega_N | model.Omega_SS, initialize=l_sr_rule) #Feeder length.
 
 model.pf = pyo.Param(initialize=pf, domain=Reals) #System power factor.
