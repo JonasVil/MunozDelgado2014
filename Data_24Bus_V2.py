@@ -242,7 +242,7 @@ Omega_LN_t = {1: [indx+1 for indx,value in enumerate(peak_demand[:, 0]) if value
               3: [indx+1 for indx,value in enumerate(peak_demand[:, 2]) if value > 0]
               }
 
-Omega_N = np.arange(1, n_bus+1-4, dtype=int) #Sets of nodes connected to node s by system nodes
+Omega_N = np.arange(1, n_bus+1, dtype=int) #Sets of nodes connected to node s by system nodes
 Omega_p = {"C": [2, 3, 7, 13, 15, 16, 17, 20], #Sets of nodes connected to node s by distributed generation
            "W": [1, 4, 5, 9, 15, 17, 18, 19]
            }

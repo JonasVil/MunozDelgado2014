@@ -22,13 +22,11 @@ from Data_24Bus_V2 import *
 
 Vare = 0 #Penetration limit for distributed generation.
 
-
 # =============================================================================
 # Model
 # =============================================================================
 
 model = pyo.ConcreteModel()
-
 
 # =============================================================================
 # Sets
@@ -59,18 +57,9 @@ model.Omega_SSE = pyo.Set(initialize=Omega_SSE) # Fixing eq14
 model.Omega_SSN = pyo.Set(initialize=Omega_SSN) # Fixing eq14
 model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
 
-def Omega_l_s_rule(model,l,s):   
+def Omega_l_s_rule(model, l, s):   
     return Omega_l_s[l][s-1]
-model.Omega_l_s = pyo.Set(model.L, model.Omega_N | model.Omega_SS, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
-
-# =============================================================================
-# def Omega_l_s_rule(model,l,s):   
-#     if len(Omega_l_s[l][s-1]) != 0:
-#         return Omega_l_s[l][s-1]
-#     else:
-#         return pyo.Set.Skip
-# model.Omega_l_s = pyo.Set(model.L, model.Omega_N | model.Omega_SS, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
-# =============================================================================
+model.Omega_l_s = pyo.Set(model.L, model.Omega_N, initialize=Omega_l_s_rule) #Sets of nodes connected to node by a feeder of type
 
 def Omega_p_rule(model, p):
     return Omega_p[p]
