@@ -796,7 +796,14 @@ for s in model.Omega_SS:
                                for y in range(1, t+1))       
             )        
         
-        
+model.eq22 = pyo.ConstraintList()
+for t in model.T:
+    for l in ["EFF"]:
+        for k in model.K_l[l]:
+            for s,r in model.Upsilon_l[l]:
+                model.eq22.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t]
+                               <= 1
+                )       
         
         
         
