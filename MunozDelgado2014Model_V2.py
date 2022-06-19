@@ -680,21 +680,36 @@ for t in model.T:
                         )
                 )
 
-model.eq14_aux4 = pyo.ConstraintList() # It avoids "ET" transf. on new substations
+model.eq14_aux1 = pyo.ConstraintList() #It allows DG only on candidates nodes
+for t in model.T:
+    for p in model.P:
+        for k in model.K_p[p]:
+            for s in model.Omega_N:
+                if s not in model.Omega_p[p]:
+                    model.eq14_aux1.add(model.y_p_skt[p,s,k,t] == 0)
+                    
+model.eq14_aux2 = pyo.ConstraintList() #It allows transf. only on candidates nodes
+for t in model.T:
+    for tr in model.TR:
+        for k in model.K_tr[tr]:
+            for s in model.Omega_N:
+                if s not in model.Omega_SS:
+                    model.eq14_aux2.add(model.y_tr_skt[tr,s,k,t] == 0)
+
+model.eq14_aux3 = pyo.ConstraintList() # It avoids "ET" transf. on new substations
 for t in model.T:
     for b in model.B:
         for s in model.Omega_SSN:
             for k in model.K_tr['ET']:
-                model.eq14_aux4.add(model.y_tr_skt['ET',s,k,t] == 0)
+                model.eq14_aux3.add(model.y_tr_skt['ET',s,k,t] == 0)
 
-model.eq14_aux5 = pyo.ConstraintList() # It allows one type of transf. on existing substation nodes
+model.eq14_aux4 = pyo.ConstraintList() # It allows one type of transf. on existing substation nodes
 for t in model.T:
     for s in model.Omega_SSE:
-        model.eq14_aux5.add(sum(sum(model.y_tr_skt[tr,s,k,t]
+        model.eq14_aux4.add(sum(sum(model.y_tr_skt[tr,s,k,t]
                     for k in model.K_tr[tr])
                 for tr in model.TR) <= 1
             )
-
 
 model.eq16_1 = pyo.ConstraintList()
 for t in model.T:
