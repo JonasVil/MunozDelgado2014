@@ -383,7 +383,7 @@ model.g_tr_sktb = pyo.Var(model.g_tr_rule,
 def g_p_rule(model):
     index = []
     for p in model.P:
-        for s in model.Omega_N:
+        for s in model.Omega_p[p]:
             for k in model.K_p[p]:
                 for t in model.T:
                     for b in model.B:
