@@ -364,41 +364,6 @@ model.y_l_srkt = pyo.Var(model.y_l_rule,
     )
 
 
-# =============================================================================
-# def y_l_rule(model):
-#     index = []
-#     for l in model.L:
-#         for s in model.Omega_N:
-#             for r in model.Omega_l_s[l,s]:
-#                 for k in model.K_l[l]:
-#                     for t in model.T:
-#                         index.append((l,s,r,k,t))
-#     return index 
-# 
-# model.y_l_rule = pyo.Set(dimen=5, initialize=y_l_rule)
-# model.y_l_srkt = pyo.Var(model.y_l_rule,
-#                          within=pyo.Binary
-#     )
-# 
-# =============================================================================
-
-# =============================================================================
-# def y_l_rule(model):
-#     index = []
-#     for l in model.L:
-#         for s in model.Omega_N:
-#             for r in model.Omega_l_s[l,s]:
-#                 for k in model.K_l[l]:
-#                     for t in model.T:
-#                         index.append((l,s,r,k,t))
-#     return index 
-# 
-# model.y_l_rule = pyo.Set(dimen=5, initialize=y_l_rule)
-# model.y_l_srkt = pyo.Var(model.y_l_rule,
-#                          within=pyo.Binary
-#     )
-# =============================================================================
-
 def y_tr_rule(model):
     index = []
     for tr in model.TR:
