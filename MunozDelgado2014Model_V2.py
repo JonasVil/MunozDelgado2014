@@ -120,10 +120,7 @@ def C_Ip_k_rule(model, p, k):
 model.C_Ip_k = pyo.Param(model.P, model.K_p['C'] | model.K_p['W'], initialize=C_Ip_k_rule) #Investment cost coefficients of generators.
 
 def l_sr_rule(model):
-    index = {}
-    for (s,r),l,typ in branch:
-        index[s,r] = l
-    return index
+    return l__sr[s-1,r-1]
 model.l__sr = pyo.Param(model.Omega_N, model.Omega_N, initialize=l_sr_rule) #Feeder length.
 
 model.pf = pyo.Param(initialize=pf, domain=Reals) #System power factor.
@@ -715,23 +712,21 @@ model.eq16_1 = pyo.ConstraintList()
 for t in model.T:
     for b in model.B:
         for l in model.L:
-            for s,r in model.Upsilon_l[l]:
-                for k in model.K_l[l]:
-                    model.eq16_1.add((-model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,r,s,k,t,b]/model.Vbase + (model.V_stb[r,t,b] - model.V_stb[s,t,b]))
-                                     <= model.H*(1-model.y_l_srkt[l,r,s,k,t]))
-                    model.eq16_1.add((-model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase + (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
-                                     <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
-                    
+            for r in model.Omega_N:
+                for s in model.Omega_l_s[l,r]:
+                    for k in model.K_l[l]:
+                        model.eq16_1.add((-model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase + (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
+                                         <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
+
 model.eq16_2 = pyo.ConstraintList()
 for t in model.T:
     for b in model.B:
         for l in model.L:
-            for s,r in model.Upsilon_l[l]:
-                for k in model.K_l[l]:
-                    model.eq16_2.add((model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,r,s,k,t,b]/model.Vbase - (model.V_stb[r,t,b] - model.V_stb[s,t,b]))
-                                     <= model.H*(1-model.y_l_srkt[l,r,s,k,t]))
-                    model.eq16_2.add((model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase - (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
-                                     <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
+            for r in model.Omega_N:
+                for s in model.Omega_l_s[l,r]:
+                    for k in model.K_l[l]:
+                        model.eq16_2.add((model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase - (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
+                                         <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
 
 # =============================================================================
 # Investiment Constraints
