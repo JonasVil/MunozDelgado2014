@@ -249,7 +249,7 @@ C_Ep_k = {"C": [47, 45], #Conventional DG
           }
 
 #Cost for unserved energy 
-C_U = 2000
+C_U = 2000000
 
 # =============================================================================
 # Investment Costs

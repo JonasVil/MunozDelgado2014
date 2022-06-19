@@ -680,7 +680,7 @@ for t in model.T:
             model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
                         for r in model.Omega_l_s[l,s]) 
                     for k in model.K_l[l])
-                for l in model.L) == - model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
+                for l in model.L) == -model.Mi__b[b]*model.D__st[s,t] + model.d_U_stb[s,t,b]
                         )
 
 model.eq14_aux1 = pyo.ConstraintList()
@@ -726,12 +726,12 @@ for t in model.T:
             for k in model.K_tr['ET']:
                 model.eq14_aux4.add(model.y_tr_skt['ET',s,k,t] == 0)
 
-model.eq14_aux4 = pyo.ConstraintList() # It allows one type of transf. on existing substation nodes
-for t in T:
-    for s in Omega_SSE:
-        model.eq14_aux4.add(sum(sum(model.y_tr_skt[tr,s,k,t]
-                    for k in K_tr[tr])
-                for tr in TR) <= 1
+model.eq14_aux5 = pyo.ConstraintList() # It allows one type of transf. on existing substation nodes
+for t in model.T:
+    for s in model.Omega_SSE:
+        model.eq14_aux5.add(sum(sum(model.y_tr_skt[tr,s,k,t]
+                    for k in model.K_tr[tr])
+                for tr in model.TR) <= 1
             )
 
 
@@ -935,29 +935,38 @@ Results_Table = pd.DataFrame(Results_Table)
 
 #Binary utilization variables for feeders
 Variable_Util_l = []
-for l in L: #Type of line
-    for s in Omega_N: #Buses from 
-        for r in Omega_l_s[l][s-1]: #Buses to
-            for k in K_l[l]: #Line option 
-                for t in T: #Time stage
-                    if pyo.value(model.y_l_srkt[l,s,r,k,t]) == 1:
-                        var_aux ={
-                            'T_Line': l,
-                            'From': s,
-                            'To': r,
-                            'Option': k,
-                            'Stage': t,
-                            'Decision': pyo.value(model.y_l_srkt[l,s,r,k,t])
-                            }
-                        Variable_Util_l.append(var_aux)
+for l in model.L: #Type of line
+    for s,r in model.Upsilon_l[l]:
+        for k in model.K_l[l]: #Line option 
+            for t in model.T: #Time stage
+                if pyo.value(model.y_l_srkt[l,s,r,k,t]) == 1:
+                    var_aux ={
+                        'T_Line': l,
+                        'From': s,
+                        'To': r,
+                        'Option': k,
+                        'Stage': t,
+                        'Decision': pyo.value(model.y_l_srkt[l,s,r,k,t])
+                        }
+                    Variable_Util_l.append(var_aux)
+                elif pyo.value(model.y_l_srkt[l,r,s,k,t]) == 1:
+                    var_aux ={
+                        'T_Line': l,
+                        'From': r,
+                        'To': s,
+                        'Option': k,
+                        'Stage': t,
+                        'Decision': pyo.value(model.y_l_srkt[l,r,s,k,t])
+                        }
+                    Variable_Util_l.append(var_aux)
 Variable_Util_l = pd.DataFrame(Variable_Util_l)
 
 #Binary utilization variables for transformers
 Variable_Util_tr = []
-for tr in TR:
-    for s in Omega_N:
-        for k in K_tr[tr]:
-            for t in T:
+for tr in model.TR:
+    for s in model.Omega_SS:
+        for k in model.K_tr[tr]:
+            for t in model.T:
                 if pyo.value(model.y_tr_skt[tr,s,k,t]) == 1:
                     var_aux ={
                         "Trans_T":tr,
