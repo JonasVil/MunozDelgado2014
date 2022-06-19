@@ -578,22 +578,22 @@ for tr in model.TR:
 
 model.eq5_aux3 = pyo.ConstraintList()
 for l in model.L:
-    for s,r in model.Upsilon_l[l]:
-        for k in model.K_l[l]:
-            for t in model.T:
-                for b in model.B:
-                    model.eq5_aux3.add(model.f_l_srktb[l,s,r,k,t,b] == sum(model.delta_l_srktbv[l,s,r,k,t,b,v] for v in model.n__V))
-                    model.eq5_aux3.add(model.f_l_srktb[l,r,s,k,t,b] == sum(model.delta_l_srktbv[l,r,s,k,t,b,v] for v in model.n__V))
+    for r in model.Omega_N:
+        for s in model.Omega_l_s[l,r]:
+            for k in model.K_l[l]:
+                for t in model.T:
+                    for b in model.B:
+                        model.eq5_aux3.add(model.f_l_srktb[l,s,r,k,t,b] == sum(model.delta_l_srktbv[l,s,r,k,t,b,v] for v in model.n__V))
 
 model.eq5_aux4 = pyo.ConstraintList()
 for l in model.L:
-    for s,r in model.Upsilon_l[l]:
-        for k in model.K_l[l]:
-            for t in model.T:
-                for b in model.B:
-                    for v in model.n__V:
-                        model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= model.A_l_kV[l,k,v])
-                        model.eq5_aux4.add(model.delta_l_srktbv[l,r,s,k,t,b,v] <= model.A_l_kV[l,k,v])
+    for r in model.Omega_N:
+        for s in model.Omega_l_s[l,r]:
+            for k in model.K_l[l]:
+                for t in model.T:
+                    for b in model.B:
+                        for v in model.n__V:
+                            model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= model.A_l_kV[l,k,v])
 
 
 def eq6_rule(model,t):
@@ -613,12 +613,12 @@ model.eq7 = pyo.Constraint(model.Omega_N, model.T, model.B, rule=eq7_rule)
 
 model.eq8 = pyo.ConstraintList()
 for l in model.L:
-    for s,r in model.Upsilon_l[l]:
-        for k in model.K_l[l]:
-            for t in model.T:
-                for b in model.B:
-                    model.eq8.add(model.f_l_srktb[l,s,r,k,t,b] <= model.y_l_srkt[l,s,r,k,t]*model.Fup_l_k[l,k])
-                    model.eq8.add(model.f_l_srktb[l,r,s,k,t,b] <= model.y_l_srkt[l,r,s,k,t]*model.Fup_l_k[l,k])
+    for r in model.Omega_N:
+        for s in model.Omega_l_s[l,r]:
+            for k in model.K_l[l]:
+                for t in model.T:
+                    for b in model.B:
+                        model.eq8.add(model.f_l_srktb[l,s,r,k,t,b] <= model.y_l_srkt[l,s,r,k,t]*model.Fup_l_k[l,k])
                         
 model.eq9 = pyo.ConstraintList()
 for tr in model.TR:
