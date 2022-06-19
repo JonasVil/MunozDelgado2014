@@ -124,7 +124,7 @@ def l_sr_rule(model):
     for (s,r),l,typ in branch:
         index[s,r] = l
     return index
-model.l__sr = pyo.Param(model.Omega_N, model.Omega_N | model.Omega_SS, initialize=l_sr_rule) #Feeder length.
+model.l__sr = pyo.Param(model.Omega_N, model.Omega_N, initialize=l_sr_rule) #Feeder length.
 
 model.pf = pyo.Param(initialize=pf, domain=Reals) #System power factor.
 
@@ -231,11 +231,11 @@ model.Mi__b = pyo.Param(model.B, initialize=Mi__b_rule) #Loading factor of load 
 
 def D__st_rule(model):
     index = {}
-    for s in model.Omega_N | model.Omega_SS:
+    for s in model.Omega_N:
         for t in model.T:
             index[s,t] = D__st[s-1,t-1]
     return index
-model.D__st = pyo.Param(model.Omega_N | model.Omega_SS, model.T, initialize=D__st_rule, domain=Reals) #Actual nodal peak demand.
+model.D__st = pyo.Param(model.Omega_N, model.T, initialize=D__st_rule, domain=Reals) #Actual nodal peak demand.
 
 def Gmax_W_sktb_rule(model, s, k, t, b):
     return Gmax_W_sktb[s-1,k-1,t-1,b-1]
@@ -280,7 +280,7 @@ model.C_U_t = pyo.Var(model.T,
 model.C_TPV = pyo.Var(bounds=(0.0,None)
                       )
 
-model.d_U_stb = pyo.Var(model.Omega_N | model.Omega_SS, 
+model.d_U_stb = pyo.Var(model.Omega_N, 
                         model.T,
                         model.B,
                         bounds=(0.0,None)
@@ -338,14 +338,14 @@ model.x_p_skt = pyo.Var(model.x_p_rule,
     ) #Binary investment variables for generators.
 
 
-def y_l_rule(model):
+def y_l_rule(m):
     index = []
     for l in model.L:
-        for s,r in model.Upsilon_l[l]:
-            for k in model.K_l[l]:
-                for t in model.T:
-                    index.append((l,s,r,k,t))
-                    index.append((l,r,s,k,t))
+        for s in model.Omega_N:
+            for r in model.Omega_l_s[l,s]:
+                for K in K_l[l]:
+                    for t in T:
+                        index.append((l,s,r,K,t))
     return index 
 
 model.y_l_rule = pyo.Set(dimen=5, initialize=y_l_rule)
