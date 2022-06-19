@@ -844,6 +844,7 @@ for t in model.T:
                                sum(model.x_p_skt[p,s,k,y]
                                    for y in range(1,t+1))
                                )        
+
         
         
         
