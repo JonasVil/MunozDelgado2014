@@ -469,7 +469,7 @@ model.ftio_l_srktb = pyo.Var(model.f_l_rule,
                           bounds=(0.0,None)
     )
 
-model.V_stb = pyo.Var(model.Omega_N, 
+model.V_stb = pyo.Var(model.Omega_N | model.Omega_SS, 
                       model.T, 
                       model.B,
                       bounds=(0.0,None)
@@ -617,7 +617,7 @@ model.eq6 = pyo.Constraint(model.T, rule=eq6_rule)
 
 def eq7_rule(model, s, t, b):
     return pyo.inequality(model.V_ ,model.V_stb[s,t,b], model.Vup)
-model.eq7 = pyo.Constraint(model.Omega_N, model.T, model.B, rule=eq7_rule)
+model.eq7 = pyo.Constraint(model.Omega_N | model.Omega_SS, model.T, model.B, rule=eq7_rule)
 
 model.eq8 = pyo.ConstraintList()
 for l in model.L:
