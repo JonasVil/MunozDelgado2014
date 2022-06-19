@@ -236,7 +236,7 @@ model.D__st = pyo.Param(model.Omega_N, model.T, initialize=D__st_rule, domain=Re
 
 def Gmax_W_sktb_rule(model, s, k, t, b):
     return Gmax_W_sktb[s-1,k-1,t-1,b-1]
-model.Gmax_W_sktb = pyo.Param(model.Omega_p["W"], model.K_p["W"], model.T, model.B, initialize=Gmax_W_sktb_rule) #Maximum wind power availability.
+model.Gmax_W_sktb = pyo.Param(model.Omega_N, model.K_p["W"], model.T, model.B, initialize=Gmax_W_sktb_rule) #Maximum wind power availability.
 
 def Z_l_k_rule(model):
     index = {}
@@ -630,19 +630,19 @@ for tr in model.TR:
 
 model.eq10 = pyo.ConstraintList()
 for t in model.T:
-    for s in model.Omega_LN_t[t]:
+    for s in model.Omega_N:
         for b in model.B:
             model.eq10.add(model.d_U_stb[s,t,b] <= model.Mi__b[b]*model.D__st[s,t])
 
 model.eq11 = pyo.ConstraintList()
-for s in model.Omega_p["C"]:
+for s in model.Omega_N:
     for k in model.K_p["C"]:
         for t in model.T:
             for b in model.B:
                 model.eq11.add(model.g_p_sktb["C",s,k,t,b] <= model.y_p_skt["C",s,k,t]*model.Gup_p_k["C",k])
 
 model.eq12 = pyo.ConstraintList()
-for s in model.Omega_p["W"]:
+for s in model.Omega_N:
     for k in model.K_p["W"]:
         for t in model.T:
             for b in model.B:

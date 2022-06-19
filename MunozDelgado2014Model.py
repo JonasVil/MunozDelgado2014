@@ -19,7 +19,7 @@ from Data_24Bus import *
 # DG Penetration
 # =============================================================================
 
-Vare = 0.25 #Penetration limit for distributed generation.
+Vare = 0 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Model
@@ -650,88 +650,90 @@ for t in T:
                 for l in L) <= 1
             )
 
-model.eq30 = pyo.ConstraintList()
-for t in T:
-    for b in B:
-        for s in Omega_N:
-            model.eq30.add(sum(sum(sum(model.ftio_l_srktb[l,s,r,k,t,b] - model.ftio_l_srktb[l,r,s,k,t,b]
-                        for r in Omega_l_s[l][s-1])
-                    for k in K_l[l])
-                for l in L) == model.gtio_SS_stb[s,t,b] - Dtio_stb[s-1,t-1,b-1]
-            )
-                           
-model.eq31 = pyo.ConstraintList()                
-for t in T:
-    for b in B:
-        for l in ["EFF"]:
-            for r in Omega_N:
-                for s in Omega_l_s[l][r-1]:
-                    for k in K_l[l]:
-                        model.eq31.add(model.ftio_l_srktb[l,s,r,k,t,b] <= n__DG)
-                    
-model.eq32 = pyo.ConstraintList()
-for t in T:
-    for b in B:
-        for l in ["ERF"]:
-            for s,r in Upsilon_l[l]:
-                for k in K_l[l]:
-                    model.eq32.add(model.ftio_l_srktb[l,s,r,k,t,b] <= n__DG*(
-                        1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
-                                for z in K_l["NRF"])
-                             for y in range(1,t+1))
-                        )
-                    )
-
-model.eq33 = pyo.ConstraintList()
-for t in T:
-    for b in B:
-        for l in ["ERF"]:
-            for s,r in Upsilon_l[l]:
-                for k in K_l[l]:
-                    model.eq33.add(model.ftio_l_srktb[l,r,s,k,t,b] <= n__DG*(
-                        1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
-                                for z in K_l["NRF"])
-                             for y in range(1,t+1))
-                        )
-                    )
-
-model.eq34 = pyo.ConstraintList()
-for t in T:
-    for b in B:
-        for l in ["NRF", "NAF"]:
-            for k in K_l[l]:
-                for s,r in Upsilon_l[l]:
-                    model.eq34.add(model.ftio_l_srktb[l,s,r,k,t,b] <= n__DG*(
-                        sum(model.x_l_srkt[l,s,r,k,y]
-                            for y in range(1,t+1))
-                        )
-                    )
-
-model.eq35 = pyo.ConstraintList()
-for t in T:
-    for b in B:
-        for l in ["NRF", "NAF"]:
-            for k in K_l[l]:
-                for s,r in Upsilon_l[l]:
-                    model.eq35.add(model.ftio_l_srktb[l,r,s,k,t,b] <= n__DG*(
-                        sum(model.x_l_srkt[l,s,r,k,y]
-                            for y in range(1,t+1))
-                        )
-                    )
-
-model.eq36 = pyo.ConstraintList()
-for t in T:
-    for b in B:
-        for s in Omega_SS:
-            model.eq36.add(model.gtio_SS_stb[s,t,b] <= n__DG)
-
-model.eq36_aux = pyo.ConstraintList()
-for t in T:
-    for b in B:
-        for s in Omega_N:
-            if s not in Omega_SS:
-                model.eq36_aux.add(model.gtio_SS_stb[s,t,b] == 0)
-
+# =============================================================================
+# model.eq30 = pyo.ConstraintList()
+# for t in T:
+#     for b in B:
+#         for s in Omega_N:
+#             model.eq30.add(sum(sum(sum(model.ftio_l_srktb[l,s,r,k,t,b] - model.ftio_l_srktb[l,r,s,k,t,b]
+#                         for r in Omega_l_s[l][s-1])
+#                     for k in K_l[l])
+#                 for l in L) == model.gtio_SS_stb[s,t,b] - Dtio_stb[s-1,t-1,b-1]
+#             )
+#                            
+# model.eq31 = pyo.ConstraintList()                
+# for t in T:
+#     for b in B:
+#         for l in ["EFF"]:
+#             for r in Omega_N:
+#                 for s in Omega_l_s[l][r-1]:
+#                     for k in K_l[l]:
+#                         model.eq31.add(model.ftio_l_srktb[l,s,r,k,t,b] <= n__DG)
+#                     
+# model.eq32 = pyo.ConstraintList()
+# for t in T:
+#     for b in B:
+#         for l in ["ERF"]:
+#             for s,r in Upsilon_l[l]:
+#                 for k in K_l[l]:
+#                     model.eq32.add(model.ftio_l_srktb[l,s,r,k,t,b] <= n__DG*(
+#                         1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
+#                                 for z in K_l["NRF"])
+#                              for y in range(1,t+1))
+#                         )
+#                     )
+# 
+# model.eq33 = pyo.ConstraintList()
+# for t in T:
+#     for b in B:
+#         for l in ["ERF"]:
+#             for s,r in Upsilon_l[l]:
+#                 for k in K_l[l]:
+#                     model.eq33.add(model.ftio_l_srktb[l,r,s,k,t,b] <= n__DG*(
+#                         1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
+#                                 for z in K_l["NRF"])
+#                              for y in range(1,t+1))
+#                         )
+#                     )
+# 
+# model.eq34 = pyo.ConstraintList()
+# for t in T:
+#     for b in B:
+#         for l in ["NRF", "NAF"]:
+#             for k in K_l[l]:
+#                 for s,r in Upsilon_l[l]:
+#                     model.eq34.add(model.ftio_l_srktb[l,s,r,k,t,b] <= n__DG*(
+#                         sum(model.x_l_srkt[l,s,r,k,y]
+#                             for y in range(1,t+1))
+#                         )
+#                     )
+# 
+# model.eq35 = pyo.ConstraintList()
+# for t in T:
+#     for b in B:
+#         for l in ["NRF", "NAF"]:
+#             for k in K_l[l]:
+#                 for s,r in Upsilon_l[l]:
+#                     model.eq35.add(model.ftio_l_srktb[l,r,s,k,t,b] <= n__DG*(
+#                         sum(model.x_l_srkt[l,s,r,k,y]
+#                             for y in range(1,t+1))
+#                         )
+#                     )
+# 
+# model.eq36 = pyo.ConstraintList()
+# for t in T:
+#     for b in B:
+#         for s in Omega_SS:
+#             model.eq36.add(model.gtio_SS_stb[s,t,b] <= n__DG)
+# 
+# model.eq36_aux = pyo.ConstraintList()
+# for t in T:
+#     for b in B:
+#         for s in Omega_N:
+#             if s not in Omega_SS:
+#                 model.eq36_aux.add(model.gtio_SS_stb[s,t,b] == 0)
+# 
+# =============================================================================
 # =============================================================================
 # Solver
 # =============================================================================
