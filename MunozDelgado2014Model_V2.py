@@ -9,7 +9,8 @@ DOI: 10.1109/TPWRS.2014.2364960
 @Initial Date: June 6, 2022
 @Version Date: June 17, 2022
 """
-
+import pandas as pd
+import numpy as np
 import pyomo.environ as pyo
 from pyomo.environ import *
 from pyomo.opt import SolverFactory
@@ -54,8 +55,9 @@ def K_tr_rule(model, tr):
     return K_tr[tr]
 model.K_tr = pyo.Set(model.TR, initialize=K_tr_rule) #Set of new transformers options
 model.Omega_SS = pyo.Set(initialize=Omega_SS) #Set of substation nodes
+model.Omega_SSE = pyo.Set(initialize=Omega_SSE) # Fixing eq14
+model.Omega_SSN = pyo.Set(initialize=Omega_SSN) # Fixing eq14
 model.Omega_N = pyo.Set(initialize=Omega_N) #Set of all nodes
-
 
 def Omega_l_s_rule(model,l,s):   
     return Omega_l_s[l][s-1]
@@ -717,22 +719,20 @@ for t in model.T:
                             for k in model.K_p['W'])
                         )
 
-# =============================================================================
-# model.eq14_aux3 = pyo.ConstraintList() # It avoids "ET" transf. on new substations
-# for t in T:
-#     for b in B:
-#         for s in Omega_SSN:
-#             for k in K_tr['ET']:
-#                 model.eq14_aux3.add(model.y_tr_skt['ET',s,k,t] == 0)
-# 
-# model.eq14_aux4 = pyo.ConstraintList() # It allows one type of transf. on existing substation nodes
-# for t in T:
-#     for s in Omega_SSE:
-#         model.eq14_aux4.add(sum(sum(model.y_tr_skt[tr,s,k,t]
-#                     for k in K_tr[tr])
-#                 for tr in TR) <= 1
-#             )
-# =============================================================================
+model.eq14_aux4 = pyo.ConstraintList() # It avoids "ET" transf. on new substations
+for t in model.T:
+    for b in model.B:
+        for s in model.Omega_SSN:
+            for k in model.K_tr['ET']:
+                model.eq14_aux4.add(model.y_tr_skt['ET',s,k,t] == 0)
+
+model.eq14_aux4 = pyo.ConstraintList() # It allows one type of transf. on existing substation nodes
+for t in T:
+    for s in Omega_SSE:
+        model.eq14_aux4.add(sum(sum(model.y_tr_skt[tr,s,k,t]
+                    for k in K_tr[tr])
+                for tr in TR) <= 1
+            )
 
 
 model.eq16_1 = pyo.ConstraintList()
@@ -868,12 +868,106 @@ def eq27_rule(model,t):
 
 model.eq27 = pyo.Constraint(model.T, rule=eq27_rule)        
         
+# =============================================================================
+# Radiality Constraints
+# =============================================================================
+
+
+model.eq28 = pyo.ConstraintList()
+for t in model.T:
+    for r in model.Omega_LN_t[t]:
+        model.eq28.add(sum(sum(sum(model.y_l_srkt[l,s,r,k,t] 
+                    for k in model.K_l[l])
+                for s in model.Omega_l_s[l,r])
+            for l in model.L) == 1
+        )        
+        
+model.eq29 = pyo.ConstraintList()
+for t in model.T:
+    for r in model.Omega_N:
+        if r not in model.Omega_LN_t[t]:
+            model.eq29.add(sum(sum(sum(model.y_l_srkt[l,s,r,k,t] 
+                        for k in model.K_l[l])
+                    for s in model.Omega_l_s[l,r])
+                for l in model.L) <= 1
+            )        
         
         
-        
-        
-        
-        
+# =============================================================================
+# Solver
+# =============================================================================
+
+opt = SolverFactory('gurobi')
+opt.options['threads'] = 16
+opt.options['mipgap'] = 1/100
+opt.solve(model, warmstart=False, tee=True)
+
+
+# =============================================================================
+# Results: Reports
+# =============================================================================
+
+#Results - 
+i = 7.1/100
+Yearly_Costs = []
+for t in range(1,np.shape(T)[0]+1):
+    year_aux = {
+                'Investment':np.round(pyo.value(model.C_I_t[t])/1e6,4),
+                'Maintenance':np.round(pyo.value(model.C_M_t[t])/1e6,4),
+                'Production':np.round(pyo.value(model.C_E_t[t])/1e6,4),
+                'Losses':np.round(pyo.value(model.C_R_t[t])/1e6,4),
+                'Unserved Energy':np.round(pyo.value(model.C_U_t[t])/1e6,4)
+        }
+    Yearly_Costs.append(year_aux)
+Yearly_Costs = pd.DataFrame(Yearly_Costs)
+
+i = 7.1/100
+Results_Table = [{
+    'Investment': np.round(pyo.value(sum(model.C_I_t[t]*(((1+i)**(-t))/i) for t in T))/1e6,4),
+    'Maintenance': np.round(pyo.value(sum(model.C_M_t[t]*(((1+i)**(-t))) for t in T) + model.C_M_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+    'Production': np.round(pyo.value(sum(model.C_E_t[t]*(((1+i)**(-t))) for t in T) + model.C_E_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+    'Losses': np.round(pyo.value(sum(model.C_R_t[t]*(((1+i)**(-t))) for t in T) + model.C_R_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+    'Unserved Energy': np.round(pyo.value(sum(model.C_U_t[t]*(((1+i)**(-t))) for t in T) + model.C_U_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+    'C_TPV': np.round(pyo.value(model.C_TPV)/1e6,4)
+    }]
+Results_Table = pd.DataFrame(Results_Table)
+
+
+#Binary utilization variables for feeders
+Variable_Util_l = []
+for l in L: #Type of line
+    for s in Omega_N: #Buses from 
+        for r in Omega_l_s[l][s-1]: #Buses to
+            for k in K_l[l]: #Line option 
+                for t in T: #Time stage
+                    if pyo.value(model.y_l_srkt[l,s,r,k,t]) == 1:
+                        var_aux ={
+                            'T_Line': l,
+                            'From': s,
+                            'To': r,
+                            'Option': k,
+                            'Stage': t,
+                            'Decision': pyo.value(model.y_l_srkt[l,s,r,k,t])
+                            }
+                        Variable_Util_l.append(var_aux)
+Variable_Util_l = pd.DataFrame(Variable_Util_l)
+
+#Binary utilization variables for transformers
+Variable_Util_tr = []
+for tr in TR:
+    for s in Omega_N:
+        for k in K_tr[tr]:
+            for t in T:
+                if pyo.value(model.y_tr_skt[tr,s,k,t]) == 1:
+                    var_aux ={
+                        "Trans_T":tr,
+                        "Bus":s,
+                        "Option":k,
+                        "Stage":t,
+                        "Decision":pyo.value(model.y_tr_skt[tr,s,k,t])
+                        }
+                    Variable_Util_tr.append(var_aux)
+Variable_Util_tr = pd.DataFrame(Variable_Util_tr)        
         
         
         
