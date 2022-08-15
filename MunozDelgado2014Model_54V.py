@@ -309,7 +309,7 @@ def eq3_rule(model,t):
 model.eq3 = pyo.Constraint(T, rule=eq3_rule)
 
 def eq4_rule(model,t):
-    return model.C_E_t[t] == (sum(Delta__b[b-1]*pf*(sum(sum(sum(C_SS_b[b-1]*model.g_tr_sktb[tr,s,k,t,b]
+    return model.C_E_t[t] == (sum(Delta__b[b-1]*pf*(sum(sum(sum(C_SS_b[s][b-1]*model.g_tr_sktb[tr,s,k,t,b]
                                 for s in Omega_SS)
                             for k in K_tr[tr])
                         for tr in TR)
@@ -324,7 +324,7 @@ def eq4_rule(model,t):
 model.eq4 = pyo.Constraint(T, rule=eq4_rule)
 
 def eq5_rule(model,t):
-    return model.C_R_t[t] == (sum(Delta__b[b-1]*C_SS_b[b-1]*pf*(sum(sum(sum(sum(
+    return model.C_R_t[t] == (sum(Delta__b[b-1]*C_SS_l[b-1]*pf*(sum(sum(sum(sum(
                                 M_tr_kV[tr][k-1][y-1]*model.delta_tr_sktbv[tr,s,k,t,b,y]
                                 for y in range(1,n__V+1))
                             for s in Omega_SS)
@@ -428,13 +428,15 @@ for s in Omega_N:
             for b in B:
                 model.eq11.add(model.g_p_sktb["C",s,k,t,b] <= model.y_p_skt["C",s,k,t]*Gup_p_k["C"][k-1])
 
-model.eq12 = pyo.ConstraintList()
-for s in Omega_N:
-    for k in K_p["W"]:
-        for t in T:
-            for b in B:
-                model.eq12.add(model.g_p_sktb["W",s,k,t,b] <= model.y_p_skt["W",s,k,t]*min(Gup_p_k["W"][k-1],Gmax_W_sktb[s-1,k-1,t-1,b-1]))
-
+# =============================================================================
+# model.eq12 = pyo.ConstraintList()
+# for s in Omega_N:
+#     for k in K_p["W"]:
+#         for t in T:
+#             for b in B:
+#                 model.eq12.add(model.g_p_sktb["W",s,k,t,b] <= model.y_p_skt["W",s,k,t]*min(Gup_p_k["W"][k-1],Gmax_W_sktb[s-1,k-1,t-1,b-1]))
+# 
+# =============================================================================
 model.eq13 = pyo.ConstraintList()
 for t in T:
     for b in B:
@@ -738,8 +740,8 @@ for t in T:
 # =============================================================================
 
 opt = SolverFactory('gurobi')
-opt.options['threads'] = 16
-opt.options['mipgap'] = 1/100
+opt.options['threads'] = 8
+opt.options['mipgap'] = 0/100
 opt.solve(model, warmstart=False, tee=True)
 
 # =============================================================================
@@ -747,7 +749,7 @@ opt.solve(model, warmstart=False, tee=True)
 # =============================================================================
 
 #Results - 
-i = 7.1/100
+i = 10/100
 Yearly_Costs = []
 for t in range(1,np.shape(T)[0]+1):
     year_aux = {
@@ -760,7 +762,7 @@ for t in range(1,np.shape(T)[0]+1):
     Yearly_Costs.append(year_aux)
 Yearly_Costs = pd.DataFrame(Yearly_Costs)
 
-i = 7.1/100
+i = 10/100
 Results_Table = [{
     'Investment': np.round(pyo.value(sum(model.C_I_t[t]*(((1+i)**(-t))/i) for t in T))/1e6,4),
     'Maintenance': np.round(pyo.value(sum(model.C_M_t[t]*(((1+i)**(-t))) for t in T) + model.C_M_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),

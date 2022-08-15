@@ -75,7 +75,7 @@ model.Upsilon_N = pyo.Set(model.L, initialize=Upsilon_N_rule) #Set of nodes with
 
 def Omega_LN_t_rule(model, t):
     return Omega_LN_t[t]
-model.Omega_LN_t = pyo.Param(model.T, initialize=Omega_LN_t_rule)
+model.Omega_LN_t = pyo.Param(model.T, initialize=Omega_LN_t_rule, within=Any)
 
 # =============================================================================
 # Parameters
@@ -120,7 +120,11 @@ def C_Ip_k_rule(model, p, k):
 model.C_Ip_k = pyo.Param(model.P, model.K_p['C'] | model.K_p['W'], initialize=C_Ip_k_rule) #Investment cost coefficients of generators.
 
 def l_sr_rule(model):
-    return l__sr[s-1,r-1]
+    index = {}
+    for s in model.Omega_N:
+        for r in model.Omega_N:
+            index[s,r] = l__sr[s-1,r-1]
+    return index
 model.l__sr = pyo.Param(model.Omega_N, model.Omega_N, initialize=l_sr_rule) #Feeder length.
 
 model.pf = pyo.Param(initialize=pf, domain=Reals) #System power factor.
@@ -506,492 +510,494 @@ def eq2_rule(model,t):
                             )  
 model.eq2 = pyo.Constraint(model.T, rule=eq2_rule)
 
-def eq3_rule(model,t):
-    return model.C_M_t[t] == (sum(sum(sum(model.C_Ml_k[l,k]*(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t])
-                    for s,r in model.Upsilon_l[l])
-                for k in model.K_l[l])
-            for l in model.L)
-            
-            + sum(sum(sum(model.C_Mtr_k[tr,k]*model.y_tr_skt[tr,s,k,t]
-                    for s in model.Omega_SS)
-                for k in model.K_tr[tr])
-            for tr in model.TR)
-            
-            + sum(sum(sum(model.C_Mp_k[p,k]*model.y_p_skt[p,s,k,t]
-                    for s in model.Omega_p[p])
-                for k in model.K_p[p])
-            for p in model.P)
-        
-        )
-model.eq3 = pyo.Constraint(model.T, rule=eq3_rule)
-
-def eq4_rule(model,t):
-    return model.C_E_t[t] == (sum(model.Delta__b[b]*model.pf*(sum(sum(sum(model.C_SS_b[b]*model.g_tr_sktb[tr,s,k,t,b]
-                                for s in model.Omega_SS)
-                            for k in model.K_tr[tr])
-                        for tr in model.TR)
-                        
-                        + sum(sum(sum(model.C_Ep_k[p,k]*model.g_p_sktb[p,s,k,t,b]
-                                for s in model.Omega_p[p])
-                            for k in model.K_p[p])
-                        for p in model.P)
-                        )
-                for b in model.B)
-            )
-model.eq4 = pyo.Constraint(model.T, rule=eq4_rule)
-
-def eq5_rule(model,t):
-    return model.C_R_t[t] == (sum(model.Delta__b[b]*model.C_SS_b[b]*model.pf*(sum(sum(sum(sum(
-                                model.M_tr_kV[tr,k,y]*model.delta_tr_sktbv[tr,s,k,t,b,y]
-                                for y in model.n__V)
-                            for s in model.Omega_SS)
-                        for k in model.K_tr[tr])
-                    for tr in model.TR)
-
-                    + sum(sum(sum(sum(model.M_l_kV[l,k,z]*model.l__sr[s,r]*(model.delta_l_srktbv[l,s,r,k,t,b,z] + model.delta_l_srktbv[l,r,s,k,t,b,z])
-                                for z in model.n__V)
-                            for s, r in model.Upsilon_l[l])
-                        for k in model.K_l[l])
-                    for l in model.L)
-                )
-            for b in model.B)
-        )
-model.eq5 = pyo.Constraint(model.T, rule=eq5_rule)
-
-model.eq5_aux1 = pyo.ConstraintList()
-for tr in model.TR:
-    for s in model.Omega_SS:
-        for k in model.K_tr[tr]:
-            for t in model.T:
-                for b in model.B:
-                    model.eq5_aux1.add(model.g_tr_sktb[tr,s,k,t,b] == sum(model.delta_tr_sktbv[tr,s,k,t,b,v] for v in model.n__V))
-
-model.eq5_aux2 = pyo.ConstraintList()
-for tr in model.TR:
-    for s in model.Omega_SS:
-        for k in model.K_tr[tr]:
-            for t in model.T:
-                for b in model.B:
-                    for v in model.n__V:
-                        model.eq5_aux2.add(model.delta_tr_sktbv[tr,s,k,t,b,v] <= model.A_tr_kV[tr,k,v])
-
-
-model.eq5_aux3 = pyo.ConstraintList()
-for l in model.L:
-    for r in model.Omega_N:
-        for s in model.Omega_l_s[l,r]:
-            for k in model.K_l[l]:
-                for t in model.T:
-                    for b in model.B:
-                        model.eq5_aux3.add(model.f_l_srktb[l,s,r,k,t,b] == sum(model.delta_l_srktbv[l,s,r,k,t,b,v] for v in model.n__V))
-
-model.eq5_aux4 = pyo.ConstraintList()
-for l in model.L:
-    for r in model.Omega_N:
-        for s in model.Omega_l_s[l,r]:
-            for k in model.K_l[l]:
-                for t in model.T:
-                    for b in model.B:
-                        for v in model.n__V:
-                            model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= model.A_l_kV[l,k,v])
-
-
-def eq6_rule(model,t):
-    return model.C_U_t[t] == (sum(sum(model.Delta__b[b]*model.C_U*model.pf*model.d_U_stb[s,t,b]
-                for s in model.Omega_LN_t[t])
-            for b in model.B)
-        )
-model.eq6 = pyo.Constraint(model.T, rule=eq6_rule)
-
 # =============================================================================
-# Kirchhoff's Laws and Operational Limits
+# def eq3_rule(model,t):
+#     return model.C_M_t[t] == (sum(sum(sum(model.C_Ml_k[l,k]*(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t])
+#                     for s,r in model.Upsilon_l[l])
+#                 for k in model.K_l[l])
+#             for l in model.L)
+#             
+#             + sum(sum(sum(model.C_Mtr_k[tr,k]*model.y_tr_skt[tr,s,k,t]
+#                     for s in model.Omega_SS)
+#                 for k in model.K_tr[tr])
+#             for tr in model.TR)
+#             
+#             + sum(sum(sum(model.C_Mp_k[p,k]*model.y_p_skt[p,s,k,t]
+#                     for s in model.Omega_p[p])
+#                 for k in model.K_p[p])
+#             for p in model.P)
+#         
+#         )
+# model.eq3 = pyo.Constraint(model.T, rule=eq3_rule)
+# 
+# def eq4_rule(model,t):
+#     return model.C_E_t[t] == (sum(model.Delta__b[b]*model.pf*(sum(sum(sum(model.C_SS_b[b]*model.g_tr_sktb[tr,s,k,t,b]
+#                                 for s in model.Omega_SS)
+#                             for k in model.K_tr[tr])
+#                         for tr in model.TR)
+#                         
+#                         + sum(sum(sum(model.C_Ep_k[p,k]*model.g_p_sktb[p,s,k,t,b]
+#                                 for s in model.Omega_p[p])
+#                             for k in model.K_p[p])
+#                         for p in model.P)
+#                         )
+#                 for b in model.B)
+#             )
+# model.eq4 = pyo.Constraint(model.T, rule=eq4_rule)
+# 
+# def eq5_rule(model,t):
+#     return model.C_R_t[t] == (sum(model.Delta__b[b]*model.C_SS_b[b]*model.pf*(sum(sum(sum(sum(
+#                                 model.M_tr_kV[tr,k,y]*model.delta_tr_sktbv[tr,s,k,t,b,y]
+#                                 for y in model.n__V)
+#                             for s in model.Omega_SS)
+#                         for k in model.K_tr[tr])
+#                     for tr in model.TR)
+# 
+#                     + sum(sum(sum(sum(model.M_l_kV[l,k,z]*model.l__sr[s,r]*(model.delta_l_srktbv[l,s,r,k,t,b,z] + model.delta_l_srktbv[l,r,s,k,t,b,z])
+#                                 for z in model.n__V)
+#                             for s, r in model.Upsilon_l[l])
+#                         for k in model.K_l[l])
+#                     for l in model.L)
+#                 )
+#             for b in model.B)
+#         )
+# model.eq5 = pyo.Constraint(model.T, rule=eq5_rule)
+# 
+# model.eq5_aux1 = pyo.ConstraintList()
+# for tr in model.TR:
+#     for s in model.Omega_SS:
+#         for k in model.K_tr[tr]:
+#             for t in model.T:
+#                 for b in model.B:
+#                     model.eq5_aux1.add(model.g_tr_sktb[tr,s,k,t,b] == sum(model.delta_tr_sktbv[tr,s,k,t,b,v] for v in model.n__V))
+# 
+# model.eq5_aux2 = pyo.ConstraintList()
+# for tr in model.TR:
+#     for s in model.Omega_SS:
+#         for k in model.K_tr[tr]:
+#             for t in model.T:
+#                 for b in model.B:
+#                     for v in model.n__V:
+#                         model.eq5_aux2.add(model.delta_tr_sktbv[tr,s,k,t,b,v] <= model.A_tr_kV[tr,k,v])
+# 
+# 
+# model.eq5_aux3 = pyo.ConstraintList()
+# for l in model.L:
+#     for r in model.Omega_N:
+#         for s in model.Omega_l_s[l,r]:
+#             for k in model.K_l[l]:
+#                 for t in model.T:
+#                     for b in model.B:
+#                         model.eq5_aux3.add(model.f_l_srktb[l,s,r,k,t,b] == sum(model.delta_l_srktbv[l,s,r,k,t,b,v] for v in model.n__V))
+# 
+# model.eq5_aux4 = pyo.ConstraintList()
+# for l in model.L:
+#     for r in model.Omega_N:
+#         for s in model.Omega_l_s[l,r]:
+#             for k in model.K_l[l]:
+#                 for t in model.T:
+#                     for b in model.B:
+#                         for v in model.n__V:
+#                             model.eq5_aux4.add(model.delta_l_srktbv[l,s,r,k,t,b,v] <= model.A_l_kV[l,k,v])
+# 
+# 
+# def eq6_rule(model,t):
+#     return model.C_U_t[t] == (sum(sum(model.Delta__b[b]*model.C_U*model.pf*model.d_U_stb[s,t,b]
+#                 for s in model.Omega_LN_t[t])
+#             for b in model.B)
+#         )
+# model.eq6 = pyo.Constraint(model.T, rule=eq6_rule)
+# 
+# # =============================================================================
+# # Kirchhoff's Laws and Operational Limits
+# # =============================================================================
+# 
+# def eq7_rule(model, s, t, b):
+#     return pyo.inequality(model.V_ ,model.V_stb[s,t,b], model.Vup)
+# model.eq7 = pyo.Constraint(model.Omega_N, model.T, model.B, rule=eq7_rule)
+# 
+# model.eq8 = pyo.ConstraintList()
+# for l in model.L:
+#     for r in model.Omega_N:
+#         for s in model.Omega_l_s[l,r]:
+#             for k in model.K_l[l]:
+#                 for t in model.T:
+#                     for b in model.B:
+#                         model.eq8.add(model.f_l_srktb[l,s,r,k,t,b] <= model.y_l_srkt[l,s,r,k,t]*model.Fup_l_k[l,k])
+#                         
+# model.eq9 = pyo.ConstraintList()
+# for tr in model.TR:
+#     for s in model.Omega_SS:
+#         for k in model.K_tr[tr]:
+#             for t in model.T:
+#                 for b in model.B:
+#                     model.eq9.add(model.g_tr_sktb[tr,s,k,t,b] <= model.y_tr_skt[tr,s,k,t]*model.Gup_tr_k[tr,k])
+# 
+# model.eq10 = pyo.ConstraintList()
+# for t in model.T:
+#     for s in model.Omega_N:
+#         for b in model.B:
+#             model.eq10.add(model.d_U_stb[s,t,b] <= model.Mi__b[b]*model.D__st[s,t])
+# 
+# model.eq11 = pyo.ConstraintList()
+# for s in model.Omega_N:
+#     for k in model.K_p["C"]:
+#         for t in model.T:
+#             for b in model.B:
+#                 model.eq11.add(model.g_p_sktb["C",s,k,t,b] <= model.y_p_skt["C",s,k,t]*model.Gup_p_k["C",k])
+# 
+# model.eq12 = pyo.ConstraintList()
+# for s in model.Omega_N:
+#     for k in model.K_p["W"]:
+#         for t in model.T:
+#             for b in model.B:
+#                 model.eq12.add(model.g_p_sktb["W",s,k,t,b] <= model.y_p_skt["W",s,k,t]*min(model.Gup_p_k["W",k],model.Gmax_W_sktb[s,k,t,b]))
+# 
+# model.eq13 = pyo.ConstraintList()
+# for t in model.T:
+#     for b in model.B:
+#         model.eq13.add(sum(sum(sum(model.g_p_sktb[p,s,k,t,b]
+#                 for s in model.Omega_p[p])
+#             for k in model.K_p[p])
+#         for p in model.P) 
+#         <= model.Vare*sum(model.Mi__b[b]*model.D__st[s,t]
+#             for s in model.Omega_LN_t[t])       
+#         )
+#    
+# model.eq14 = pyo.ConstraintList()
+# for t in model.T:
+#     for b in model.B:
+#         for s in model.Omega_N:
+#             model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
+#                         for r in model.Omega_l_s[l,s]) 
+#                     for k in model.K_l[l])
+#                 for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
+#                                 for k in model.K_tr[tr])
+#                             for tr in model.TR)
+#                             + sum(sum(model.g_p_sktb[p,s,k,t,b]
+#                                 for k in model.K_p[p])
+#                             for p in model.P)
+#                             - model.Mi__b[b]*model.D__st[s,t]
+#                             + model.d_U_stb[s,t,b]
+#                         )
+#                 )
+# 
+# model.eq14_aux1 = pyo.ConstraintList() #It allows DG only on candidates nodes
+# for t in model.T:
+#     for p in model.P:
+#         for k in model.K_p[p]:
+#             for s in model.Omega_N:
+#                 if s not in model.Omega_p[p]:
+#                     model.eq14_aux1.add(model.y_p_skt[p,s,k,t] == 0)
+#                     
+# model.eq14_aux2 = pyo.ConstraintList() #It allows transf. only on candidates nodes
+# for t in model.T:
+#     for tr in model.TR:
+#         for k in model.K_tr[tr]:
+#             for s in model.Omega_N:
+#                 if s not in model.Omega_SS:
+#                     model.eq14_aux2.add(model.y_tr_skt[tr,s,k,t] == 0)
+# 
+# model.eq14_aux3 = pyo.ConstraintList() # It avoids "ET" transf. on new substations
+# for t in model.T:
+#     for b in model.B:
+#         for s in model.Omega_SSN:
+#             for k in model.K_tr['ET']:
+#                 model.eq14_aux3.add(model.y_tr_skt['ET',s,k,t] == 0)
+# 
+# model.eq14_aux4 = pyo.ConstraintList() # It allows one type of transf. on existing substation nodes
+# for t in model.T:
+#     for s in model.Omega_SSE:
+#         model.eq14_aux4.add(sum(sum(model.y_tr_skt[tr,s,k,t]
+#                     for k in model.K_tr[tr])
+#                 for tr in model.TR) <= 1
+#             )
+# 
+# model.eq16_1 = pyo.ConstraintList()
+# for t in model.T:
+#     for b in model.B:
+#         for l in model.L:
+#             for r in model.Omega_N:
+#                 for s in model.Omega_l_s[l,r]:
+#                     for k in model.K_l[l]:
+#                         model.eq16_1.add((-model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase + (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
+#                                          <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
+# 
+# model.eq16_2 = pyo.ConstraintList()
+# for t in model.T:
+#     for b in model.B:
+#         for l in model.L:
+#             for r in model.Omega_N:
+#                 for s in model.Omega_l_s[l,r]:
+#                     for k in model.K_l[l]:
+#                         model.eq16_2.add((model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase - (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
+#                                          <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
+# 
+# # =============================================================================
+# # Investiment Constraints
+# # =============================================================================
+# 
+# model.eq17 = pyo.ConstraintList()
+# for l in model.L_nl:
+#     for s,r in model.Upsilon_l[l]:
+#         model.eq17.add(sum(sum(model.x_l_srkt[l,s,r,k,t]
+#                         for k in model.K_l[l])
+#                     for t in model.T) <= 1
+#         )
+#         
+# model.eq18 = pyo.ConstraintList()
+# for s in model.Omega_SS:
+#     model.eq18.add(sum(model.x_SS_st[s,t]
+#                        for t in model.T) <= 1
+#     )       
+#         
+# model.eq19 = pyo.ConstraintList()
+# for s in model.Omega_SS:
+#     model.eq19.add(sum(sum(model.x_NT_skt[s,k,t]
+#                 for k in model.K_tr["NT"])
+#             for t in model.T) <= 1
+#         )        
+#         
+# model.eq20 = pyo.ConstraintList()
+# for p in model.P:
+#     for s in model.Omega_p[p]:
+#         model.eq20.add(sum(sum(model.x_p_skt[p,s,k,t]
+#                 for k in model.K_p[p])
+#             for t in model.T) <= 1
+#         )        
+#         
+# model.eq21 = pyo.ConstraintList()
+# for s in model.Omega_SS:
+#     for k in model.K_tr["NT"]:
+#         for t in model.T:
+#             model.eq21.add(model.x_NT_skt[s,k,t] 
+#                            <=
+#                            sum(model.x_SS_st[s,y] 
+#                                for y in range(1, t+1))       
+#             )        
+#         
+# model.eq22 = pyo.ConstraintList()
+# for t in model.T:
+#     for l in ["EFF"]:
+#         for k in model.K_l[l]:
+#             for s,r in model.Upsilon_l[l]:
+#                 model.eq22.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t]
+#                                <= 1
+#                 )       
+#         
+# model.eq23 = pyo.ConstraintList()
+# for t in model.T:
+#     for l in ["NRF", "NAF"]:
+#         for k in model.K_l[l]:
+#             for s,r in model.Upsilon_l[l]:
+#                 model.eq23.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] 
+#                                <= sum(model.x_l_srkt[l,s,r,k,y]
+#                                    for y in range(1,t+1))
+#                 )        
+#         
+# model.eq24 = pyo.ConstraintList()
+# for t in model.T:
+#     for l in ["ERF"]:
+#         for k in model.K_l[l]:
+#             for s,r in model.Upsilon_l[l]:
+#                 model.eq24.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] 
+#                                <= 1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
+#                                        for z in model.K_l["NRF"])
+#                                    for y in range(1,t+1))
+#                 )
+#         
+# model.eq25 = pyo.ConstraintList()
+# for t in model.T:
+#     for s in model.Omega_SS:
+#         for k in model.K_tr["NT"]:
+#             model.eq25.add(model.y_tr_skt["NT", s, k, t] 
+#                            <= sum(model.x_NT_skt[s,k,y]
+#                                for y in range(1,t+1))
+#                            )        
+#         
+# model.eq26 = pyo.ConstraintList()
+# for t in model.T:
+#     for p in model.P:
+#         for s in model.Omega_p[p]:
+#             for k in model.K_p[p]:
+#                 model.eq26.add(model.y_p_skt[p,s,k,t] <=
+#                                sum(model.x_p_skt[p,s,k,y]
+#                                    for y in range(1,t+1))
+#                                )        
+# 
+# def eq27_rule(model,t):
+#     return ((sum(sum(sum(model.C_Il_k[l,k]*model.l__sr[s,r]*model.x_l_srkt[l,s,r,k,t]
+#                 for s,r in model.Upsilon_l[l])
+#             for k in model.K_l[l])
+#         for l in ["NRF", "NAF"])
+#         + sum(model.C_ISS_s[s]*model.x_SS_st[s,t]
+#             for s in model.Omega_SS)
+#         + sum(sum(model.C_INT_k[k]*model.x_SS_st[s,t]
+#                 for s in model.Omega_SS)
+#             for k in model.K_tr["NT"])
+#         + sum(sum(sum(model.C_Ip_k[p,k]*model.pf*model.Gup_p_k[p,k]*model.x_p_skt[p,s,k,t]
+#                     for s in model.Omega_p[p])
+#                 for k in model.K_p[p])
+#             for p in model.P)
+#         <= model.IB__t[t])
+#     )
+# 
+# model.eq27 = pyo.Constraint(model.T, rule=eq27_rule)        
+#         
+# # =============================================================================
+# # Radiality Constraints
+# # =============================================================================
+# 
+# 
+# model.eq28 = pyo.ConstraintList()
+# for t in model.T:
+#     for r in model.Omega_LN_t[t]:
+#         model.eq28.add(sum(sum(sum(model.y_l_srkt[l,s,r,k,t] 
+#                     for k in model.K_l[l])
+#                 for s in model.Omega_l_s[l,r])
+#             for l in model.L) == 1
+#         )        
+#         
+# model.eq29 = pyo.ConstraintList()
+# for t in model.T:
+#     for r in model.Omega_N:
+#         if r not in model.Omega_LN_t[t]:
+#             model.eq29.add(sum(sum(sum(model.y_l_srkt[l,s,r,k,t] 
+#                         for k in model.K_l[l])
+#                     for s in model.Omega_l_s[l,r])
+#                 for l in model.L) <= 1
+#             )        
+#         
+#         
+# # =============================================================================
+# # Solver
+# # =============================================================================
+# 
+# opt = SolverFactory('gurobi')
+# opt.options['threads'] = 16
+# opt.options['mipgap'] = 1/100
+# opt.solve(model, warmstart=False, tee=True)
+# 
+# 
+# # =============================================================================
+# # Results: Reports
+# # =============================================================================
+# 
+# #Results - 
+# i = 7.1/100
+# Yearly_Costs = []
+# for t in range(1,np.shape(T)[0]+1):
+#     year_aux = {
+#                 'Investment':np.round(pyo.value(model.C_I_t[t])/1e6,4),
+#                 'Maintenance':np.round(pyo.value(model.C_M_t[t])/1e6,4),
+#                 'Production':np.round(pyo.value(model.C_E_t[t])/1e6,4),
+#                 'Losses':np.round(pyo.value(model.C_R_t[t])/1e6,4),
+#                 'Unserved Energy':np.round(pyo.value(model.C_U_t[t])/1e6,4)
+#         }
+#     Yearly_Costs.append(year_aux)
+# Yearly_Costs = pd.DataFrame(Yearly_Costs)
+# 
+# i = 7.1/100
+# Results_Table = [{
+#     'Investment': np.round(pyo.value(sum(model.C_I_t[t]*(((1+i)**(-t))/i) for t in T))/1e6,4),
+#     'Maintenance': np.round(pyo.value(sum(model.C_M_t[t]*(((1+i)**(-t))) for t in T) + model.C_M_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+#     'Production': np.round(pyo.value(sum(model.C_E_t[t]*(((1+i)**(-t))) for t in T) + model.C_E_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+#     'Losses': np.round(pyo.value(sum(model.C_R_t[t]*(((1+i)**(-t))) for t in T) + model.C_R_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+#     'Unserved Energy': np.round(pyo.value(sum(model.C_U_t[t]*(((1+i)**(-t))) for t in T) + model.C_U_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
+#     'C_TPV': np.round(pyo.value(model.C_TPV)/1e6,4)
+#     }]
+# Results_Table = pd.DataFrame(Results_Table)
+# 
+# 
+# #Binary utilization variables for feeders
+# Variable_Util_l = []
+# for l in model.L: #Type of line
+#     for s,r in model.Upsilon_l[l]:
+#         for k in model.K_l[l]: #Line option 
+#             for t in model.T: #Time stage
+#                 if pyo.value(model.y_l_srkt[l,s,r,k,t]) == 1:
+#                     var_aux ={
+#                         'T_Line': l,
+#                         'From': s,
+#                         'To': r,
+#                         'Option': k,
+#                         'Stage': t,
+#                         'Decision': pyo.value(model.y_l_srkt[l,s,r,k,t])
+#                         }
+#                     Variable_Util_l.append(var_aux)
+#                 elif pyo.value(model.y_l_srkt[l,r,s,k,t]) == 1:
+#                     var_aux ={
+#                         'T_Line': l,
+#                         'From': r,
+#                         'To': s,
+#                         'Option': k,
+#                         'Stage': t,
+#                         'Decision': pyo.value(model.y_l_srkt[l,r,s,k,t])
+#                         }
+#                     Variable_Util_l.append(var_aux)
+# Variable_Util_l = pd.DataFrame(Variable_Util_l)
+# 
+# #Binary utilization variables for transformers
+# Variable_Util_tr = []
+# for tr in model.TR:
+#     for s in model.Omega_SS:
+#         for k in model.K_tr[tr]:
+#             for t in model.T:
+#                 if pyo.value(model.y_tr_skt[tr,s,k,t]) == 1:
+#                     var_aux ={
+#                         "Trans_T":tr,
+#                         "Bus":s,
+#                         "Option":k,
+#                         "Stage":t,
+#                         "Decision":pyo.value(model.y_tr_skt[tr,s,k,t])
+#                         }
+#                     Variable_Util_tr.append(var_aux)
+# Variable_Util_tr = pd.DataFrame(Variable_Util_tr)        
+#         
+#         
+# #Actual current flows through feeders
+# Actual_C_Flow_l = []
+# for l in model.L: #Type of line
+#     for s,r in model.Upsilon_l[l]:
+#         for k in model.K_l[l]: #Line option 
+#             for t in model.T: #Time stage
+#                 for b in model.B: #Load level
+#                     if pyo.value(model.f_l_srktb[l,s,r,k,t,b]) > 0.1:
+#                         actual_aux = {
+#                             'T_Line': l,
+#                             'From': s,
+#                             'To': r,
+#                             'Option': k,
+#                             'Stage': t,
+#                             'L_level': b,
+#                             'Flow': pyo.value(model.f_l_srktb[l,s,r,k,t,b])
+#                             }
+#                         Actual_C_Flow_l.append(actual_aux) 
+#                     elif pyo.value(model.f_l_srktb[l,r,s,k,t,b]) > 0.1:
+#                         actual_aux = {
+#                             'T_Line': l,
+#                             'From': r,
+#                             'To': s,
+#                             'Option': k,
+#                             'Stage': t,
+#                             'L_level': b,
+#                             'Flow': pyo.value(model.f_l_srktb[l,r,s,k,t,b])
+#                             }
+#                         Actual_C_Flow_l.append(actual_aux) 
+# Actual_C_Flow_l = pd.DataFrame(Actual_C_Flow_l)         
+#         
+#         
+#         
+#         
+#         
+#         
+#         
+#         
+#         
+#         
+#         
+#         
+#         
+#         
+#         
 # =============================================================================
-
-def eq7_rule(model, s, t, b):
-    return pyo.inequality(model.V_ ,model.V_stb[s,t,b], model.Vup)
-model.eq7 = pyo.Constraint(model.Omega_N, model.T, model.B, rule=eq7_rule)
-
-model.eq8 = pyo.ConstraintList()
-for l in model.L:
-    for r in model.Omega_N:
-        for s in model.Omega_l_s[l,r]:
-            for k in model.K_l[l]:
-                for t in model.T:
-                    for b in model.B:
-                        model.eq8.add(model.f_l_srktb[l,s,r,k,t,b] <= model.y_l_srkt[l,s,r,k,t]*model.Fup_l_k[l,k])
-                        
-model.eq9 = pyo.ConstraintList()
-for tr in model.TR:
-    for s in model.Omega_SS:
-        for k in model.K_tr[tr]:
-            for t in model.T:
-                for b in model.B:
-                    model.eq9.add(model.g_tr_sktb[tr,s,k,t,b] <= model.y_tr_skt[tr,s,k,t]*model.Gup_tr_k[tr,k])
-
-model.eq10 = pyo.ConstraintList()
-for t in model.T:
-    for s in model.Omega_N:
-        for b in model.B:
-            model.eq10.add(model.d_U_stb[s,t,b] <= model.Mi__b[b]*model.D__st[s,t])
-
-model.eq11 = pyo.ConstraintList()
-for s in model.Omega_N:
-    for k in model.K_p["C"]:
-        for t in model.T:
-            for b in model.B:
-                model.eq11.add(model.g_p_sktb["C",s,k,t,b] <= model.y_p_skt["C",s,k,t]*model.Gup_p_k["C",k])
-
-model.eq12 = pyo.ConstraintList()
-for s in model.Omega_N:
-    for k in model.K_p["W"]:
-        for t in model.T:
-            for b in model.B:
-                model.eq12.add(model.g_p_sktb["W",s,k,t,b] <= model.y_p_skt["W",s,k,t]*min(model.Gup_p_k["W",k],model.Gmax_W_sktb[s,k,t,b]))
-
-model.eq13 = pyo.ConstraintList()
-for t in model.T:
-    for b in model.B:
-        model.eq13.add(sum(sum(sum(model.g_p_sktb[p,s,k,t,b]
-                for s in model.Omega_p[p])
-            for k in model.K_p[p])
-        for p in model.P) 
-        <= model.Vare*sum(model.Mi__b[b]*model.D__st[s,t]
-            for s in model.Omega_LN_t[t])       
-        )
-   
-model.eq14 = pyo.ConstraintList()
-for t in model.T:
-    for b in model.B:
-        for s in model.Omega_N:
-            model.eq14.add(sum(sum(sum(model.f_l_srktb[l,s,r,k,t,b] - model.f_l_srktb[l,r,s,k,t,b]
-                        for r in model.Omega_l_s[l,s]) 
-                    for k in model.K_l[l])
-                for l in model.L) == (sum(sum(model.g_tr_sktb[tr,s,k,t,b]
-                                for k in model.K_tr[tr])
-                            for tr in model.TR)
-                            + sum(sum(model.g_p_sktb[p,s,k,t,b]
-                                for k in model.K_p[p])
-                            for p in model.P)
-                            - model.Mi__b[b]*model.D__st[s,t]
-                            + model.d_U_stb[s,t,b]
-                        )
-                )
-
-model.eq14_aux1 = pyo.ConstraintList() #It allows DG only on candidates nodes
-for t in model.T:
-    for p in model.P:
-        for k in model.K_p[p]:
-            for s in model.Omega_N:
-                if s not in model.Omega_p[p]:
-                    model.eq14_aux1.add(model.y_p_skt[p,s,k,t] == 0)
-                    
-model.eq14_aux2 = pyo.ConstraintList() #It allows transf. only on candidates nodes
-for t in model.T:
-    for tr in model.TR:
-        for k in model.K_tr[tr]:
-            for s in model.Omega_N:
-                if s not in model.Omega_SS:
-                    model.eq14_aux2.add(model.y_tr_skt[tr,s,k,t] == 0)
-
-model.eq14_aux3 = pyo.ConstraintList() # It avoids "ET" transf. on new substations
-for t in model.T:
-    for b in model.B:
-        for s in model.Omega_SSN:
-            for k in model.K_tr['ET']:
-                model.eq14_aux3.add(model.y_tr_skt['ET',s,k,t] == 0)
-
-model.eq14_aux4 = pyo.ConstraintList() # It allows one type of transf. on existing substation nodes
-for t in model.T:
-    for s in model.Omega_SSE:
-        model.eq14_aux4.add(sum(sum(model.y_tr_skt[tr,s,k,t]
-                    for k in model.K_tr[tr])
-                for tr in model.TR) <= 1
-            )
-
-model.eq16_1 = pyo.ConstraintList()
-for t in model.T:
-    for b in model.B:
-        for l in model.L:
-            for r in model.Omega_N:
-                for s in model.Omega_l_s[l,r]:
-                    for k in model.K_l[l]:
-                        model.eq16_1.add((-model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase + (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
-                                         <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
-
-model.eq16_2 = pyo.ConstraintList()
-for t in model.T:
-    for b in model.B:
-        for l in model.L:
-            for r in model.Omega_N:
-                for s in model.Omega_l_s[l,r]:
-                    for k in model.K_l[l]:
-                        model.eq16_2.add((model.Z_l_k[l,k]*model.l__sr[s,r]*model.f_l_srktb[l,s,r,k,t,b]/model.Vbase - (model.V_stb[s,t,b] - model.V_stb[r,t,b]))
-                                         <= model.H*(1-model.y_l_srkt[l,s,r,k,t]))
-
-# =============================================================================
-# Investiment Constraints
-# =============================================================================
-
-model.eq17 = pyo.ConstraintList()
-for l in model.L_nl:
-    for s,r in model.Upsilon_l[l]:
-        model.eq17.add(sum(sum(model.x_l_srkt[l,s,r,k,t]
-                        for k in model.K_l[l])
-                    for t in model.T) <= 1
-        )
-        
-model.eq18 = pyo.ConstraintList()
-for s in model.Omega_SS:
-    model.eq18.add(sum(model.x_SS_st[s,t]
-                       for t in model.T) <= 1
-    )       
-        
-model.eq19 = pyo.ConstraintList()
-for s in model.Omega_SS:
-    model.eq19.add(sum(sum(model.x_NT_skt[s,k,t]
-                for k in model.K_tr["NT"])
-            for t in model.T) <= 1
-        )        
-        
-model.eq20 = pyo.ConstraintList()
-for p in model.P:
-    for s in model.Omega_p[p]:
-        model.eq20.add(sum(sum(model.x_p_skt[p,s,k,t]
-                for k in model.K_p[p])
-            for t in model.T) <= 1
-        )        
-        
-model.eq21 = pyo.ConstraintList()
-for s in model.Omega_SS:
-    for k in model.K_tr["NT"]:
-        for t in model.T:
-            model.eq21.add(model.x_NT_skt[s,k,t] 
-                           <=
-                           sum(model.x_SS_st[s,y] 
-                               for y in range(1, t+1))       
-            )        
-        
-model.eq22 = pyo.ConstraintList()
-for t in model.T:
-    for l in ["EFF"]:
-        for k in model.K_l[l]:
-            for s,r in model.Upsilon_l[l]:
-                model.eq22.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t]
-                               <= 1
-                )       
-        
-model.eq23 = pyo.ConstraintList()
-for t in model.T:
-    for l in ["NRF", "NAF"]:
-        for k in model.K_l[l]:
-            for s,r in model.Upsilon_l[l]:
-                model.eq23.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] 
-                               <= sum(model.x_l_srkt[l,s,r,k,y]
-                                   for y in range(1,t+1))
-                )        
-        
-model.eq24 = pyo.ConstraintList()
-for t in model.T:
-    for l in ["ERF"]:
-        for k in model.K_l[l]:
-            for s,r in model.Upsilon_l[l]:
-                model.eq24.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] 
-                               <= 1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
-                                       for z in model.K_l["NRF"])
-                                   for y in range(1,t+1))
-                )
-        
-model.eq25 = pyo.ConstraintList()
-for t in model.T:
-    for s in model.Omega_SS:
-        for k in model.K_tr["NT"]:
-            model.eq25.add(model.y_tr_skt["NT", s, k, t] 
-                           <= sum(model.x_NT_skt[s,k,y]
-                               for y in range(1,t+1))
-                           )        
-        
-model.eq26 = pyo.ConstraintList()
-for t in model.T:
-    for p in model.P:
-        for s in model.Omega_p[p]:
-            for k in model.K_p[p]:
-                model.eq26.add(model.y_p_skt[p,s,k,t] <=
-                               sum(model.x_p_skt[p,s,k,y]
-                                   for y in range(1,t+1))
-                               )        
-
-def eq27_rule(model,t):
-    return ((sum(sum(sum(model.C_Il_k[l,k]*model.l__sr[s,r]*model.x_l_srkt[l,s,r,k,t]
-                for s,r in model.Upsilon_l[l])
-            for k in model.K_l[l])
-        for l in ["NRF", "NAF"])
-        + sum(model.C_ISS_s[s]*model.x_SS_st[s,t]
-            for s in model.Omega_SS)
-        + sum(sum(model.C_INT_k[k]*model.x_SS_st[s,t]
-                for s in model.Omega_SS)
-            for k in model.K_tr["NT"])
-        + sum(sum(sum(model.C_Ip_k[p,k]*model.pf*model.Gup_p_k[p,k]*model.x_p_skt[p,s,k,t]
-                    for s in model.Omega_p[p])
-                for k in model.K_p[p])
-            for p in model.P)
-        <= model.IB__t[t])
-    )
-
-model.eq27 = pyo.Constraint(model.T, rule=eq27_rule)        
-        
-# =============================================================================
-# Radiality Constraints
-# =============================================================================
-
-
-model.eq28 = pyo.ConstraintList()
-for t in model.T:
-    for r in model.Omega_LN_t[t]:
-        model.eq28.add(sum(sum(sum(model.y_l_srkt[l,s,r,k,t] 
-                    for k in model.K_l[l])
-                for s in model.Omega_l_s[l,r])
-            for l in model.L) == 1
-        )        
-        
-model.eq29 = pyo.ConstraintList()
-for t in model.T:
-    for r in model.Omega_N:
-        if r not in model.Omega_LN_t[t]:
-            model.eq29.add(sum(sum(sum(model.y_l_srkt[l,s,r,k,t] 
-                        for k in model.K_l[l])
-                    for s in model.Omega_l_s[l,r])
-                for l in model.L) <= 1
-            )        
-        
-        
-# =============================================================================
-# Solver
-# =============================================================================
-
-opt = SolverFactory('gurobi')
-opt.options['threads'] = 16
-opt.options['mipgap'] = 1/100
-opt.solve(model, warmstart=False, tee=True)
-
-
-# =============================================================================
-# Results: Reports
-# =============================================================================
-
-#Results - 
-i = 7.1/100
-Yearly_Costs = []
-for t in range(1,np.shape(T)[0]+1):
-    year_aux = {
-                'Investment':np.round(pyo.value(model.C_I_t[t])/1e6,4),
-                'Maintenance':np.round(pyo.value(model.C_M_t[t])/1e6,4),
-                'Production':np.round(pyo.value(model.C_E_t[t])/1e6,4),
-                'Losses':np.round(pyo.value(model.C_R_t[t])/1e6,4),
-                'Unserved Energy':np.round(pyo.value(model.C_U_t[t])/1e6,4)
-        }
-    Yearly_Costs.append(year_aux)
-Yearly_Costs = pd.DataFrame(Yearly_Costs)
-
-i = 7.1/100
-Results_Table = [{
-    'Investment': np.round(pyo.value(sum(model.C_I_t[t]*(((1+i)**(-t))/i) for t in T))/1e6,4),
-    'Maintenance': np.round(pyo.value(sum(model.C_M_t[t]*(((1+i)**(-t))) for t in T) + model.C_M_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
-    'Production': np.round(pyo.value(sum(model.C_E_t[t]*(((1+i)**(-t))) for t in T) + model.C_E_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
-    'Losses': np.round(pyo.value(sum(model.C_R_t[t]*(((1+i)**(-t))) for t in T) + model.C_R_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
-    'Unserved Energy': np.round(pyo.value(sum(model.C_U_t[t]*(((1+i)**(-t))) for t in T) + model.C_U_t[T[-1]]*((1+i)**(-T[-1])/i))/1e6,4),
-    'C_TPV': np.round(pyo.value(model.C_TPV)/1e6,4)
-    }]
-Results_Table = pd.DataFrame(Results_Table)
-
-
-#Binary utilization variables for feeders
-Variable_Util_l = []
-for l in model.L: #Type of line
-    for s,r in model.Upsilon_l[l]:
-        for k in model.K_l[l]: #Line option 
-            for t in model.T: #Time stage
-                if pyo.value(model.y_l_srkt[l,s,r,k,t]) == 1:
-                    var_aux ={
-                        'T_Line': l,
-                        'From': s,
-                        'To': r,
-                        'Option': k,
-                        'Stage': t,
-                        'Decision': pyo.value(model.y_l_srkt[l,s,r,k,t])
-                        }
-                    Variable_Util_l.append(var_aux)
-                elif pyo.value(model.y_l_srkt[l,r,s,k,t]) == 1:
-                    var_aux ={
-                        'T_Line': l,
-                        'From': r,
-                        'To': s,
-                        'Option': k,
-                        'Stage': t,
-                        'Decision': pyo.value(model.y_l_srkt[l,r,s,k,t])
-                        }
-                    Variable_Util_l.append(var_aux)
-Variable_Util_l = pd.DataFrame(Variable_Util_l)
-
-#Binary utilization variables for transformers
-Variable_Util_tr = []
-for tr in model.TR:
-    for s in model.Omega_SS:
-        for k in model.K_tr[tr]:
-            for t in model.T:
-                if pyo.value(model.y_tr_skt[tr,s,k,t]) == 1:
-                    var_aux ={
-                        "Trans_T":tr,
-                        "Bus":s,
-                        "Option":k,
-                        "Stage":t,
-                        "Decision":pyo.value(model.y_tr_skt[tr,s,k,t])
-                        }
-                    Variable_Util_tr.append(var_aux)
-Variable_Util_tr = pd.DataFrame(Variable_Util_tr)        
-        
-        
-#Actual current flows through feeders
-Actual_C_Flow_l = []
-for l in model.L: #Type of line
-    for s,r in model.Upsilon_l[l]:
-        for k in model.K_l[l]: #Line option 
-            for t in model.T: #Time stage
-                for b in model.B: #Load level
-                    if pyo.value(model.f_l_srktb[l,s,r,k,t,b]) > 0.1:
-                        actual_aux = {
-                            'T_Line': l,
-                            'From': s,
-                            'To': r,
-                            'Option': k,
-                            'Stage': t,
-                            'L_level': b,
-                            'Flow': pyo.value(model.f_l_srktb[l,s,r,k,t,b])
-                            }
-                        Actual_C_Flow_l.append(actual_aux) 
-                    elif pyo.value(model.f_l_srktb[l,r,s,k,t,b]) > 0.1:
-                        actual_aux = {
-                            'T_Line': l,
-                            'From': r,
-                            'To': s,
-                            'Option': k,
-                            'Stage': t,
-                            'L_level': b,
-                            'Flow': pyo.value(model.f_l_srktb[l,r,s,k,t,b])
-                            }
-                        Actual_C_Flow_l.append(actual_aux) 
-Actual_C_Flow_l = pd.DataFrame(Actual_C_Flow_l)         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
