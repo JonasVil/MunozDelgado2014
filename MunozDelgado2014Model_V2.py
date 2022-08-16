@@ -20,7 +20,7 @@ from Data_24Bus_V2 import *
 # DG Penetration
 # =============================================================================
 
-Vare = 0 #Penetration limit for distributed generation.
+Vare = 0.25 #Penetration limit for distributed generation.
 
 # =============================================================================
 # Model
@@ -959,6 +959,15 @@ for t in model.T:
     for b in model.B:
         for s in model.Omega_SS:
             model.eq36.add(model.gtio_SS_stb[s,t,b] <= model.n__DG)
+
+model.eq36_aux = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for s in model.Omega_N:
+            if s not in model.Omega_SS:
+                model.eq36_aux.add(model.gtio_SS_stb[s,t,b] == 0)
+
+
         
 # =============================================================================
 # Solver
