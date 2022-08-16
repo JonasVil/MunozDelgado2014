@@ -256,7 +256,7 @@ model.IB__t = pyo.Param(model.T, initialize=IB__t_rule) #Investment budget for s
 
 def Dtio_stb_rule(model, s, t, b):
     return Dtio_stb[s-1,t-1,b-1]
-model.Dtio_stb = pyo.Param(model.Omega_N, model.T, model.B, initialize=Dtio_stb_rule)
+model.Dtio_stb = pyo.Param(model.Omega_N, model.T, model.B, initialize=Dtio_stb_rule) #Fictitious nodal demand.
 
 # =============================================================================
 # Variables
