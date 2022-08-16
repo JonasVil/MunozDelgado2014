@@ -254,6 +254,10 @@ def IB__t_rule(model, t):
     return IB__t[t-1]
 model.IB__t = pyo.Param(model.T, initialize=IB__t_rule) #Investment budget for stage t.
 
+def Dtio_stb_rule(model, s, t, b):
+    return Dtio_stb[s-1,t-1,b-1]
+model.Dtio_stb = pyo.Param(model.Omega_N, model.T, model.B, initialize=Dtio_stb_rule)
+
 # =============================================================================
 # Variables
 # =============================================================================
@@ -397,6 +401,12 @@ model.g_tr_rule = pyo.Set(dimen=5, initialize=g_tr_rule)
 model.g_tr_sktb = pyo.Var(model.g_tr_rule,
                          bounds=(0.0,None)                        
     )
+
+model.gtio_SS_stb = pyo.Var(model.Omega_N, 
+                            model.T, 
+                            model.B,
+                            bounds=(0.0,None)
+                            )
 
 def g_p_rule(model):
     index = []
@@ -847,6 +857,7 @@ model.eq27 = pyo.Constraint(model.T, rule=eq27_rule)
 # Radiality Constraints
 # =============================================================================
 
+#General Equations for Radiality
 
 model.eq28 = pyo.ConstraintList()
 for t in model.T:
@@ -867,6 +878,18 @@ for t in model.T:
                 for l in model.L) <= 1
             )        
         
+#Muñoz Additions
+
+model.eq30 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for s in model.Omega_N:
+            model.eq30.add(sum(sum(sum(model.ftio_l_srktb[l,s,r,k,t,b] - model.ftio_l_srktb[l,r,s,k,t,b]
+                        for r in model.Omega_l_s[l,s])
+                    for k in model.K_l[l])
+                for l in model.L) == model.gtio_SS_stb[s,t,b] - model.Dtio_stb[s,t,b]
+            )
+
         
 # =============================================================================
 # Solver
