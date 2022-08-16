@@ -903,6 +903,32 @@ for t in model.T:
                     for k in model.K_l[l]:
                         model.eq31.add(model.ftio_l_srktb[l,s,r,k,t,b] <= model.n__DG)
 
+model.eq32 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for l in ["ERF"]:
+            for s,r in model.Upsilon_l[l]:
+                for k in model.K_l[l]:
+                    model.eq32.add(model.ftio_l_srktb[l,s,r,k,t,b] <= model.n__DG*(
+                        1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
+                                for z in model.K_l["NRF"])
+                             for y in range(1,t+1))
+                        )
+                    )
+
+model.eq33 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for l in ["ERF"]:
+            for s,r in model.Upsilon_l[l]:
+                for k in model.K_l[l]:
+                    model.eq33.add(model.ftio_l_srktb[l,r,s,k,t,b] <= model.n__DG*(
+                        1 - sum(sum(model.x_l_srkt["NRF",s,r,z,y]
+                                for z in model.K_l["NRF"])
+                             for y in range(1,t+1))
+                        )
+                    )
+
         
 # =============================================================================
 # Solver
