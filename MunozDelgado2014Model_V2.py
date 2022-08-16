@@ -40,6 +40,8 @@ model.P = pyo.Set(initialize=P) #Set of Generator Types
 model.TR = pyo.Set(initialize=TR) #Set of Transformers Types
 model.n__V = pyo.Set(initialize=[1, 2, 3]) #Number of blocks of the piecewise linear energy losses.
 
+
+
 def K_p_rule(model, p):
     return K_p[p]
 model.K_p = pyo.Set(model.P, initialize=K_p_rule) #Set of DG options
@@ -86,6 +88,8 @@ model.H = pyo.Param(initialize=H, domain=Reals)
 model.Vare = pyo.Param(initialize=Vare, domain=Reals) #Penetration limit for distributed generation.
 
 model.i = pyo.Param(initialize=i, domain=Reals) #Annual interest rate.
+
+model.n__DG = pyo.Param(initialize=n__DG, domain=Reals) 
 
 def RR_l_rule(model, l):
     if l in ['NRF','NAF']:
@@ -889,6 +893,15 @@ for t in model.T:
                     for k in model.K_l[l])
                 for l in model.L) == model.gtio_SS_stb[s,t,b] - model.Dtio_stb[s,t,b]
             )
+
+model.eq31 = pyo.ConstraintList()                
+for t in model.T:
+    for b in model.B:
+        for l in ["EFF"]:
+            for r in model.Omega_N:
+                for s in model.Omega_l_s[l,r]:
+                    for k in model.K_l[l]:
+                        model.eq31.add(model.ftio_l_srktb[l,s,r,k,t,b] <= model.n__DG)
 
         
 # =============================================================================
