@@ -953,6 +953,12 @@ for t in model.T:
                             for y in range(1,t+1))
                         )
                     )
+
+model.eq36 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for s in model.Omega_SS:
+            model.eq36.add(model.gtio_SS_stb[s,t,b] <= model.n__DG)
         
 # =============================================================================
 # Solver
