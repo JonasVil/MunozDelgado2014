@@ -942,6 +942,17 @@ for t in model.T:
                     )
 
 
+model.eq35 = pyo.ConstraintList()
+for t in model.T:
+    for b in model.B:
+        for l in ["NRF", "NAF"]:
+            for k in model.K_l[l]:
+                for s,r in model.Upsilon_l[l]:
+                    model.eq35.add(model.ftio_l_srktb[l,r,s,k,t,b] <= model.n__DG*(
+                        sum(model.x_l_srkt[l,s,r,k,y]
+                            for y in range(1,t+1))
+                        )
+                    )
         
 # =============================================================================
 # Solver
