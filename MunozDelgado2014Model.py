@@ -629,6 +629,17 @@ def eq27_rule(model,t):
 
 model.eq27 = pyo.Constraint(T, rule=eq27_rule)
 
+model.eq37 = pyo.ConstraintList()
+for t in T:
+    for l in L:
+        for k in K_l[l]:
+            for s in Omega_SS:
+                for r in Omega_l_s[l][s-1]:
+                    model.eq37.add(model.y_l_srkt[l,s,r,k,t] + model.y_l_srkt[l,r,s,k,t] <= sum(sum(model.y_tr_skt[tr, s, ktr, t]
+                            for ktr in K_tr[tr])
+                        for tr in TR))
+            
+        
 # =============================================================================
 # Radiality Constraints
 # =============================================================================
@@ -739,7 +750,7 @@ for t in T:
 
 opt = SolverFactory('gurobi')
 opt.options['threads'] = 16
-opt.options['mipgap'] = 1/100
+opt.options['mipgap'] = 0/100
 opt.solve(model, warmstart=False, tee=True)
 
 # =============================================================================
